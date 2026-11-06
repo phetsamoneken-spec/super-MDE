@@ -1,0 +1,58 @@
+name: Deploy PromoTrack to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'promotrack-pro/**'
+      - '.github/workflows/deploy-promotrack-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.4'
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - name: Install locked dependencies
+        working-directory: promotrack-pro
+        run: bun install --frozen-lockfile
+      - name: Type check
+        working-directory: promotrack-pro
+        run: npm run lint
+      - name: Build for Pages path
+        working-directory: promotrack-pro
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: npm run build -- --base="${PAGES_BASE_PATH}/"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: promotrack-pro/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

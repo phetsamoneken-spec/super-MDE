@@ -1,0 +1,6 @@
+{
+  "name": "Promotion Tracking & To-Do List PWA",
+  "description": "Mobile-first Sales Promotion Tracking, Store Order Management, and To-Do List PWA with bilingual Lao-English support, Excel import/export, and offline drafts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
