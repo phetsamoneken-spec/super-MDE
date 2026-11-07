@@ -53,7 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-[var(--color-surface)] border-b-2 border-[var(--color-border)] shadow-xs transition-colors">
+      <header className="app-topbar sticky top-0 z-40 w-full bg-[var(--color-surface)] border-b-2 border-[var(--color-border)] shadow-xs transition-colors">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-2 sm:gap-3">
           
           {/* Left: Mobile hamburger & Brand */}
@@ -195,7 +195,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onOpenSwitchUser();
               }}
               className="flex items-center gap-1.5 sm:gap-2 p-1 sm:pl-1.5 sm:pr-2.5 sm:py-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60 transition group text-left"
-              title="Switch demo role"
+              title={language === 'lo' ? 'ບັນຊີຂອງທ່ານ' : 'Your account'}
             >
               <img
                 src={avatarFor(currentUser)}

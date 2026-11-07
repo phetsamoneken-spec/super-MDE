@@ -1,3 +1,4 @@
+import { FieldIllustration } from './FieldIllustration';
 import { avatarFor } from '../utils/avatar';
 import React, { useState, useMemo } from 'react';
 import {
@@ -138,7 +139,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   return (
-    <div className="space-y-4 max-w-lg mx-auto">
+    <div className="dashboard-page space-y-5 max-w-3xl mx-auto">
 
       {/* 1. Header (Greeting, Date, Notification Icon, Avatar) */}
       <div className="flex items-center justify-between pb-1">
@@ -221,6 +222,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
+      <section className="dashboard-hero">
+        <div className="dashboard-hero-copy"><p className="eyebrow">{language === 'lo' ? 'ພາບລວມປະຈຳວັນ' : 'YOUR DAILY OVERVIEW'}</p>
+        <h2>{language === 'lo' ? 'ພ້ອມສຳລັບ' : 'A fresh day.'}<br/>{language === 'lo' ? 'ທຸກໂອກາດ.' : 'New possibilities.'}</h2>
+        <button onClick={() => handleCardClick('stores')} className="hero-cta">{language === 'lo' ? 'ເບິ່ງຮ້ານຄ້າ' : 'Explore outlets'}<ArrowRight size={15}/></button></div>
+        <FieldIllustration />
+      </section>
       {/* 2. Compact Promotion Selector */}
       <div className="calm-surface p-2 rounded-2xl flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 pl-2">
@@ -246,7 +253,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 3. Two-Column KPI Grid */}
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="dashboard-metrics grid grid-cols-2 gap-3">
         
         {/* KPI 1: Total Stores */}
         <motion.div

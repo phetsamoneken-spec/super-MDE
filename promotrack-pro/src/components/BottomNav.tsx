@@ -47,15 +47,16 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-1 pointer-events-none">
-      <div className="max-w-md mx-auto pointer-events-auto bg-[var(--color-surface)] border-2 border-[var(--color-border)] rounded-3xl shadow-xl shadow-black/10 dark:shadow-black/50 mb-2 px-1.5 py-1.5 flex items-center justify-between">
+    <nav aria-label={language === 'lo' ? 'ເມນູຫຼັກ' : 'Main navigation'} className="mobile-dock lg:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-1 pointer-events-none">
+      <div className="max-w-md mx-auto pointer-events-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-xl shadow-black/10 dark:shadow-black/50 mb-2 px-1.5 py-1.5 flex items-center justify-between">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
           return (
             <motion.button
               key={item.id}
-              whileTap={{ scale: 0.82 }}
+              aria-current={isActive ? 'page' : undefined}
+              whileTap={{ scale: 0.94 }}
               transition={{ type: 'spring', stiffness: 500, damping: 25 }}
               onClick={() => handleTabClick(item.id)}
               className={`relative min-w-[54px] min-h-[48px] py-1.5 px-1 flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-colors ${

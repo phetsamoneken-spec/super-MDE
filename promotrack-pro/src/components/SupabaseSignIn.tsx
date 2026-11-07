@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
+import { LockKeyhole, Sparkles } from 'lucide-react';
+import { FieldIllustration } from './FieldIllustration';
 import { supabase } from '../services/supabaseClient';
 import type { Language } from '../types';
 
@@ -24,11 +27,18 @@ export function SupabaseSignIn({ language }: { language: Language }) {
     } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
     finally { setBusy(false); }
   };
-  return <main className="min-h-screen flex items-center justify-center p-4 bg-[var(--color-bg)] text-[var(--color-text-primary)]">
-    <section className="calm-card w-full max-w-md rounded-3xl p-6 space-y-5">
-      <h1 className="text-2xl font-black">PromoTrack</h1>
-      <h2 className="font-bold">{register ? (lao ? 'ສ້າງບັນຊີ' : 'Create account') : (lao ? 'ເຂົ້າລະບົບ' : 'Sign in')}</h2>
-      <form onSubmit={submit} className="space-y-4">
+  return <main className="signin-page">
+    <motion.section initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} transition={{duration:0.45}} className="signin-shell">
+      <div className="signin-story">
+        <div className="signin-wordmark"><span><Sparkles size={20}/></span> PromoTrack <span className="signin-app-tag">FIELD APP</span></div>
+        <FieldIllustration />
+        <div className="signin-story-copy"><p className="eyebrow">{lao ? 'ທຸກຮ້ານຄ້າ. ທຸກໂອກາດ.' : 'EVERY OUTLET. EVERY OPPORTUNITY.'}</p>
+        <h2>{lao ? 'ວຽກພາກສະໜາມ' : 'Your day in the field,'}<br/>{lao ? 'ທີ່ງ່າຍຂຶ້ນ.' : 'made simple.'}</h2>
+        <p>{lao ? 'ຈັດການຮ້ານຄ້າ, ຕິດຕາມວຽກ ແລະ ໂປຣໂມຊັ່ນ ໃນບ່ອນດຽວ.' : 'Your outlets, follow-ups and promotions. Together in one place.'}</p></div>
+      </div><div className="signin-form-panel space-y-5">
+      <div className="signin-welcome"><span className="eyebrow">{lao ? 'ພ້ອມສຳລັບມື້ໃໝ່' : 'READY FOR A NEW DAY'}</span></div>
+      <h1 className="text-2xl font-bold tracking-tight">{register ? (lao ? 'ສ້າງບັນຊີ' : 'Create account') : (lao ? 'ເຂົ້າລະບົບ' : 'Sign in')}</h1>
+      <p className="text-sm text-[var(--color-text-secondary)]">{lao ? 'ຍິນດີຕ້ອນຮັບ. ເຂົ້າບັນຊີເພື່ອເລີ່ມວຽກຂອງທ່ານ.' : 'Welcome. Sign in to get your day moving.'}</p><form onSubmit={submit} className="space-y-4 signin-form">
         <label className="block text-sm">{lao ? 'ອີເມວ' : 'Email'}<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-xl border border-[var(--color-border)] p-3" /></label>
         <label className="block text-sm">{lao ? 'ລະຫັດຜ່ານ' : 'Password'}<input type="password" minLength={8} autoComplete={register ? 'new-password' : 'current-password'} required value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-xl border border-[var(--color-border)] p-3" /></label>
         {error && <p role="alert" className="text-sm text-[var(--color-error)]">{error}</p>}
@@ -36,6 +46,6 @@ export function SupabaseSignIn({ language }: { language: Language }) {
         <button disabled={busy} className="w-full rounded-xl bg-[var(--color-primary)] p-3 text-white font-bold disabled:opacity-50">{busy ? (lao ? 'ກຳລັງດຳເນີນການ…' : 'Please wait…') : register ? (lao ? 'ສ້າງບັນຊີ' : 'Create account') : (lao ? 'ເຂົ້າລະບົບ' : 'Sign in')}</button>
       </form>
       <button type="button" onClick={() => { setRegister(!register); setError(''); setNotice(''); }} className="text-sm underline text-[var(--color-primary)]">{register ? (lao ? 'ມີບັນຊີແລ້ວ? ເຂົ້າລະບົບ' : 'Already registered? Sign in') : (lao ? 'ຍັງບໍ່ມີບັນຊີ? ສ້າງບັນຊີ' : 'New here? Create account')}</button>
-    </section>
+    <div className="signin-security"><LockKeyhole size={13}/>{lao ? 'ບັນຊີສ່ວນຕົວຂອງທ່ານ' : 'Your personal workspace'}</div></div></motion.section>
   </main>;
 }

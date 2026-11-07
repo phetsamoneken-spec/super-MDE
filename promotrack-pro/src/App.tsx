@@ -192,7 +192,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col font-sans transition-colors duration-200">
-      {supabaseEnabled && <div role="status" className="px-4 py-2 text-xs text-center bg-[var(--color-surface-secondary)]">
+      {supabaseEnabled && <div role="status" className="connection-status px-4 py-2 text-xs text-center bg-[var(--color-surface-secondary)]">
         {syncState.status === 'offline' ? (language === 'lo' ? 'Offline: ການແກ້ໄຂເກັບໃນເຄື່ອງ ຈົນກວ່າຈະເຊື່ອມຕໍ່.' : 'Offline: edits stay on this device until reconnected.') : (language === 'lo' ? 'ເຊື່ອມຕໍ່ Supabase' : 'Connected to Supabase')}
       </div>}
       {supabaseEnabled && (syncState.status === 'saving' || syncState.status === 'error') && <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4"><section role={syncState.status === 'error' ? 'alertdialog' : 'status'} aria-modal="true" className="calm-card rounded-3xl max-w-lg p-5 space-y-4">
@@ -239,7 +239,7 @@ export default function App() {
         />
 
         {/* View Content Area */}
-        <main className="flex-1 lg:pl-68 p-4 sm:p-6 lg:p-8 min-w-0">
+        <main key={currentTab} className="app-content flex-1 lg:pl-68 p-4 sm:p-6 lg:p-8 min-w-0">
           
           {/* Offline floating indicator banner */}
           {!isOnline && (
