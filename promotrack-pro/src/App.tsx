@@ -8,6 +8,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase, supabaseEnabled, projectRef } from './services/supabaseClient';
 import { SupabaseSync, type SyncState } from './services/supabaseSync';
 import { SupabaseSignIn } from './components/SupabaseSignIn';
+import { AccountDialog } from './components/AccountDialog';
 import { RemoteAccountsView } from './components/RemoteAccountsView';
 import { Navbar } from './components/Navbar';
 import { Sidebar, NavTab } from './components/Sidebar';
@@ -100,9 +101,9 @@ export default function App() {
     return () => { connection.stop(); if (sync.current === connection) sync.current = null; };
   }, [session?.user.id]);
 
-  const signOut = () => { void supabase.auth.signOut({ scope: 'local' }).then(({ error }) => {
+  const signOut = () => supabase.auth.signOut({ scope: 'local' }).then(({ error }) => {
     if (error) setSyncState((state) => ({ ...state, status: 'error', message: error.message }));
-  }); };
+  });
 
   // Initialize and register PWA service worker
   useEffect(() => {
@@ -446,10 +447,7 @@ export default function App() {
       />
 
       {/* Switch Demo User Modal */}
-      {supabaseEnabled && isSwitchUserOpen && <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"><section role="dialog" aria-modal="true" className="calm-card rounded-3xl w-full max-w-md p-5 space-y-4">
-        <h2 className="font-bold">{currentUser.fullName}</h2><p className="text-sm break-all">{currentUser.email}</p><p>{currentUser.role}</p>
-        <button className="rounded-xl border p-3" onClick={() => setIsSwitchUserOpen(false)}>{language === 'lo' ? 'ປິດ' : 'Close'}</button><button className="rounded-xl border p-3" onClick={signOut}>{language === 'lo' ? 'ອອກຈາກລະບົບ' : 'Sign out'}</button>
-      </section></div>}
+      {supabaseEnabled && isSwitchUserOpen && <AccountDialog user={currentUser} language={language} onClose={()=>setIsSwitchUserOpen(false)} onSignOut={signOut}/>}
       {!supabaseEnabled && <SwitchUserModal
         isOpen={isSwitchUserOpen}
         onClose={() => setIsSwitchUserOpen(false)}
