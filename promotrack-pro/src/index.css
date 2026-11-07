@@ -219,3 +219,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .store-directory-table th:nth-child(7), .store-directory-table td:nth-child(7) { min-width: 245px; }
 .store-directory-table td img { flex-shrink: 0; }
 .store-table-scroll::-webkit-scrollbar { height: 8px; }
+
+/* One mobile drawer layer, above both app bars, with its own scroll area. */
+.app-sidebar { top: 0; z-index: 60; width: min(320px, calc(100vw - 48px)); padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+@media (min-width: 1024px) {
+  .app-sidebar { top: var(--app-sidebar-top, 64px); z-index: 30; width: 256px; padding: 16px; }
+}

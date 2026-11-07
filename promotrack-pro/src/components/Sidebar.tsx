@@ -1,5 +1,5 @@
 import { avatarFor } from '../utils/avatar';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   LayoutDashboard,
   Store,
@@ -46,6 +46,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenSwitchUser
 }) => {
   const t = translations[language];
+  const panel = useRef<HTMLElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const header = document.querySelector('.app-topbar');
+    if (!header) return;
+    const measure = () => document.documentElement.style.setProperty('--app-sidebar-top', `${Math.max(0, header.getBoundingClientRect().bottom)}px`);
+    const observer = new ResizeObserver(measure);
+    observer.observe(header); measure();
+    window.addEventListener('scroll', measure, { passive: true });
+    window.addEventListener('resize', measure);
+    return () => { observer.disconnect(); window.removeEventListener('scroll', measure); window.removeEventListener('resize', measure); };
+  }, []);
+
+  useEffect(() => {
+    if (!isOpenMobile) return;
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    if (desktop.matches) { onCloseMobile(); return; }
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeButton.current?.focus();
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); onCloseMobile(); }
+      if (event.key !== 'Tab') return;
+      const controls = panel.current?.querySelectorAll<HTMLElement>('button, a[href], input, select, [tabindex="0"]');
+      if (!controls?.length) return;
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    const resize = () => { if (desktop.matches) onCloseMobile(); };
+    document.addEventListener('keydown', keydown); desktop.addEventListener('change', resize);
+    return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', keydown); desktop.removeEventListener('change', resize); previous?.focus(); };
+  }, [isOpenMobile, onCloseMobile]);
+
 
   const navItems = [
     { id: 'dashboard' as NavTab, label: language === 'lo' ? 'ໜ້າຫຼັກ (Home)' : 'Home Dashboard', icon: LayoutDashboard },
@@ -84,27 +120,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Mobile Backdrop */}
       {isOpenMobile && (
-        <div
+        <button
+          type="button" aria-label={language === 'lo' ? 'ປິດເມນູ' : 'Close navigation backdrop'}
           onClick={onCloseMobile}
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs lg:hidden transition-opacity"
         />
       )}
 
       {/* Sidebar Container */}
-      <aside
-        className={`fixed top-15 sm:top-16 bottom-0 left-0 z-40 w-64 calm-surface p-4 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${
-          isOpenMobile ? 'translate-x-0' : '-translate-x-full'
+      <aside ref={panel} id="app-navigation" role={isOpenMobile ? 'dialog' : undefined} aria-modal={isOpenMobile || undefined} aria-label={language === 'lo' ? 'ເມນູນຳທາງ' : 'Navigation'}
+        className={`app-sidebar fixed bottom-0 left-0 w-64 calm-surface p-4 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 lg:visible ${
+          isOpenMobile ? 'translate-x-0 visible' : '-translate-x-full invisible'
         }`}
       >
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 min-h-0 overflow-y-auto overscroll-contain">
           {/* Mobile close button */}
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-[var(--color-border)] lg:hidden">
             <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
               {language === 'lo' ? 'ເມນູນຳທາງ' : 'Navigation'}
             </span>
-            <button
+            <button ref={closeButton} aria-label={language === 'lo' ? 'ປິດເມນູ' : 'Close navigation'}
               onClick={onCloseMobile}
-              className="p-1 rounded-xl text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              className="min-h-11 min-w-11 flex items-center justify-center rounded-xl text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
             >
               <X className="w-5 h-5" />
             </button>
@@ -149,7 +186,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Bottom Current User Card with switch role shortcut */}
-        <div className="pt-3 border-t border-[var(--color-border)]">
+        <div className="shrink-0 mt-3 pt-3 border-t border-[var(--color-border)]">
           <div className="p-3 rounded-2xl bg-[var(--color-surface-secondary)] border border-[var(--color-border)]">
             <div className="flex items-center gap-2.5">
               <img
@@ -177,6 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               whileTap={{ scale: 0.94 }}
               onClick={() => {
                 triggerHaptic('light');
+                onCloseMobile();
                 onOpenSwitchUser();
               }}
               className="mt-2.5 w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-bold text-[var(--color-primary)] bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-secondary)] transition shadow-2xs"
