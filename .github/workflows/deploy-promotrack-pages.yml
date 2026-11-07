@@ -37,6 +37,9 @@ jobs:
       - name: Type check
         working-directory: promotrack-pro
         run: npm run lint
+      - name: Test admin management
+        working-directory: promotrack-pro
+        run: npm test
       - name: Build for Pages path
         working-directory: promotrack-pro
         env:

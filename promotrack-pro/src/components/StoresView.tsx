@@ -32,6 +32,7 @@ import { triggerHaptic } from '../utils/haptics';
 import confetti from 'canvas-confetti';
 
 interface StoresViewProps {
+  onManageSubChannels: () => void;
   stores: Store[];
   promotions?: Promotion[];
   promoStores?: PromotionStore[];
@@ -45,6 +46,7 @@ interface StoresViewProps {
 }
 
 export const StoresView: React.FC<StoresViewProps> = ({
+  onManageSubChannels,
   stores,
   promotions = [],
   promoStores = [],
@@ -390,7 +392,12 @@ export const StoresView: React.FC<StoresViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {currentUser.role === 'admin' && (
+            <button type="button" onClick={onManageSubChannels} className="px-3 py-2 rounded-2xl border border-[var(--color-border)] text-xs font-bold">
+              {language === 'lo' ? 'ຈັດການ Sub-channel' : 'Manage Sub-channels'}
+            </button>
+          )}
           <motion.button
             whileTap={{ scale: 0.92 }}
             onClick={() => {
@@ -1112,11 +1119,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                       onChange={(e) => setFormData({ ...formData, channel: e.target.value })}
                       className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
                     >
-                      <option value="Modern Trade">Modern Trade</option>
-                      <option value="General Trade">General Trade</option>
-                      <option value="Convenience Store (CVS)">CVS</option>
-                      <option value="Wholesale">Wholesale</option>
-                      <option value="HORECA">HORECA</option>
+                      {channels.map((channel) => <option key={channel.id} value={channel.name}>{channel.name}</option>)}
                     </select>
                   </div>
                 </div>
@@ -1145,8 +1148,14 @@ export const StoresView: React.FC<StoresViewProps> = ({
                       value={formData.subChannel}
                       onChange={(e) => setFormData({ ...formData, subChannel: e.target.value })}
                       placeholder="e.g. Supermarket"
+                      list="store-sub-channel-options"
                       className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
                     />
+                    <datalist id="store-sub-channel-options">
+                      {subChannels.filter((item) => channels.find((channel) => channel.id === item.channelId)?.name === formData.channel).map((item) => (
+                        <option key={item.id} value={item.name} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1">

@@ -317,6 +317,42 @@ class DataService {
     }
   }
 
+  public addSubChannel(input: Omit<SubChannel, 'id'>): { success: boolean; error?: string; subChannel?: SubChannel } {
+    if (this.getCurrentUser().role !== 'admin') return { success: false, error: 'admin_only' };
+    const name = input.name.trim();
+    if (!name) return { success: false, error: 'name_required' };
+    if (!this.getChannels().some((channel) => channel.id === input.channelId)) return { success: false, error: 'channel_required' };
+    const list = this.getSubChannels();
+    if (list.some((item) => item.channelId === input.channelId && item.name.normalize().toLowerCase() === name.normalize().toLowerCase())) {
+      return { success: false, error: 'duplicate_name' };
+    }
+    const subChannel: SubChannel = { ...input, name, description: input.description?.trim(), id: crypto.randomUUID() };
+    localStorage.setItem(STORAGE_KEYS.SUB_CHANNELS, JSON.stringify([...list, subChannel]));
+    this.notify();
+    return { success: true, subChannel };
+  }
+
+  public getSubChannelUsage(id: string) {
+    const item = this.getSubChannels().find((subChannel) => subChannel.id === id);
+    if (!item) return { stores: 0, promotions: 0, products: 0 };
+    return {
+      stores: this.getAllStoresUnfiltered().filter((store) => store.subChannel === item.name).length,
+      promotions: this.getAllPromotionsUnfiltered().filter((promo) => promo.targetSubChannels?.includes(item.name)).length,
+      products: this.getAllNewProductsUnfiltered().filter((product) => product.targetSubChannels?.includes(item.name)).length
+    };
+  }
+
+  public deleteSubChannel(id: string): { success: boolean; error?: string } {
+    if (this.getCurrentUser().role !== 'admin') return { success: false, error: 'admin_only' };
+    const list = this.getSubChannels();
+    if (!list.some((item) => item.id === id)) return { success: false, error: 'not_found' };
+    const usage = this.getSubChannelUsage(id);
+    if (usage.stores || usage.promotions || usage.products) return { success: false, error: 'in_use' };
+    localStorage.setItem(STORAGE_KEYS.SUB_CHANNELS, JSON.stringify(list.filter((item) => item.id !== id)));
+    this.notify();
+    return { success: true };
+  }
+
   // --- Stores ---
   public getStores(): Store[] {
     try {
@@ -829,7 +865,9 @@ class DataService {
       return { success: false, error: 'Unauthorized: Only Admin users can delete new products.' };
     }
 
-    const all = this.getAllNewProductsUnfiltered().filter((p) => p.id !== productId);
+    const products = this.getAllNewProductsUnfiltered();
+    if (!products.some((product) => product.id === productId)) return { success: false, error: 'Product not found.' };
+    const all = products.filter((p) => p.id !== productId);
     localStorage.setItem(STORAGE_KEYS.NEW_PRODUCTS, JSON.stringify(all));
 
     // Also remove associated store orders

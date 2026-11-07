@@ -40,6 +40,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { triggerHaptic } from '../utils/haptics';
 
 interface NewProductsViewProps {
+  onManageSubChannels: () => void;
   newProducts: NewProductLaunch[];
   storeOrders: NewProductStoreOrder[];
   stores: StoreType[];
@@ -58,6 +59,7 @@ const PRESET_PRODUCT_IMAGES = [
 ];
 
 export const NewProductsView: React.FC<NewProductsViewProps> = ({
+  onManageSubChannels,
   newProducts,
   storeOrders,
   stores,
@@ -134,14 +136,14 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
   const storeMap = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores]);
   const productMap = useMemo(() => new Map(newProducts.map((p) => [p.id, p])), [newProducts]);
 
-  // Unique Sub-Channels from all stores
-  const allSubChannels = useMemo(() => {
-    const set = new Set<string>();
+  // Include registered Sub-channels even before their first store is assigned.
+  const allSubChannels = (() => {
+    const set = new Set(dataService.getSubChannels().map((item) => item.name));
     stores.forEach((s) => {
       if (s.subChannel) set.add(s.subChannel);
     });
     return Array.from(set).sort();
-  }, [stores]);
+  })();
 
   // Sub-Channel stats for batch assignment
   const subChannelAssignStats = useMemo(() => {
@@ -523,7 +525,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
         </div>
 
         {/* View Switcher Tabs (Catalog vs Order Tracking) */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="bg-[var(--color-surface-secondary)] p-1 rounded-2xl flex items-center gap-1 border border-[var(--color-border)]">
             <motion.button
               whileTap={{ scale: 0.94 }}
@@ -564,6 +566,12 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
               )}
             </motion.button>
           </div>
+
+          {isAdmin && (
+            <button type="button" onClick={onManageSubChannels} className="px-3 py-2 rounded-2xl border border-[var(--color-border)] text-xs font-bold">
+              {language === 'lo' ? 'ຈັດການ Sub-channel' : 'Manage Sub-channels'}
+            </button>
+          )}
 
           {isAdmin && (
             <motion.button
@@ -824,10 +832,16 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                           <motion.button
                             whileTap={{ scale: 0.9 }}
                             onClick={() => openEditModal(product)}
+                            title={language === 'lo' ? 'ແກ້ໄຂສິນຄ້າ' : 'Edit Product'}
                             className="p-1.5 rounded-xl border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </motion.button>
+                          <button type="button" onClick={() => { setDeletingProduct(product); setFormError(''); }}
+                            aria-label={`${language === 'lo' ? 'ລົບສິນຄ້າ' : 'Delete Product'} ${product.productName}`}
+                            className="p-1.5 rounded-xl border border-[var(--color-border)] text-[var(--color-error)]">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </>
                       )}
                     </div>
@@ -1543,7 +1557,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
       {/* MODAL 3: CREATE / EDIT PRODUCT (ADMIN ONLY)              */}
       {/* ======================================================== */}
       <AnimatePresence>
-        {(isCreateModalOpen || editingProduct) && (
+        {isAdmin && (isCreateModalOpen || editingProduct) && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4">
             <motion.div
               initial={{ y: '100%', opacity: 0 }}
@@ -1813,6 +1827,28 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
         )}
       </AnimatePresence>
 
+      {isAdmin && deletingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <section role="alertdialog" aria-modal="true" aria-labelledby="delete-product-title" className="calm-card w-full max-w-md rounded-3xl p-5 space-y-4">
+            <h3 id="delete-product-title" className="font-bold">{language === 'lo' ? 'ລົບສິນຄ້າໃໝ່' : 'Delete New Product'}?</h3>
+            <p className="text-sm font-bold break-words">{deletingProduct.productName}</p>
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              {language === 'lo' ? 'ຈະລົບສິນຄ້ານີ້ ແລະ ລາຍການສັ່ງຊື້ຂອງສິນຄ້ານີ້. ບໍ່ລົບຮ້ານຄ້າ ຫຼື ສິນຄ້າອື່ນ.' : 'This deletes this product and its store order records. Stores and other products are kept.'}
+            </p>
+            {formError && <p role="alert" className="text-xs text-[var(--color-error)]">{formError}</p>}
+            <div className="flex justify-end gap-2">
+              <button type="button" className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs" onClick={() => setDeletingProduct(null)}>{t.cancel}</button>
+              <button type="button" className="rounded-xl bg-[var(--color-error)] text-white px-3 py-2 text-xs font-bold" onClick={() => {
+                const result = dataService.deleteNewProduct(deletingProduct.id);
+                if (!result.success) { setFormError(result.error || 'Failed to delete product.'); return; }
+                if (selectedProductId === deletingProduct.id) setSelectedProductId('all');
+                setDeletingProduct(null);
+                onRefreshData();
+              }}>{language === 'lo' ? 'ຢືນຢັນລົບ' : 'Confirm Delete'}</button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 };

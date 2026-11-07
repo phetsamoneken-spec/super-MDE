@@ -21,6 +21,7 @@ import { AppBrandingModal } from './components/AppBrandingModal';
 import { ThemeColorModal } from './components/ThemeColorModal';
 import { UserManagementView } from './components/UserManagementView';
 import { NewProductsView } from './components/NewProductsView';
+import { SubChannelManager } from './components/SubChannelManager';
 import { applyThemeColor } from './utils/themeColors';
 import { dataService } from './services/dataService';
 import { UserProfile, Language, Store, Promotion, PromotionStore, FollowUpTask, AppBranding, NewProductLaunch, NewProductStoreOrder } from './types';
@@ -66,6 +67,7 @@ export default function App() {
   const [isDbReviewOpen, setIsDbReviewOpen] = useState(false);
   const [isBrandingModalOpen, setIsBrandingModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isSubChannelManagerOpen, setIsSubChannelManagerOpen] = useState(false);
   const [selectedPromotionForTracking, setSelectedPromotionForTracking] = useState<string | undefined>();
 
   const isOnline = useOnlineStatus();
@@ -210,6 +212,7 @@ export default function App() {
           {/* Tab 2: Store Management */}
           {currentTab === 'stores' && (
             <StoresView
+              onManageSubChannels={() => setIsSubChannelManagerOpen(true)}
               stores={stores}
               promotions={promotions}
               promoStores={promoStores}
@@ -239,6 +242,7 @@ export default function App() {
           {/* Tab: New Product Launches & Order Tracking */}
           {currentTab === 'newProducts' && (
             <NewProductsView
+              onManageSubChannels={() => setIsSubChannelManagerOpen(true)}
               newProducts={newProducts}
               storeOrders={newProductStoreOrders}
               stores={stores}
@@ -339,6 +343,11 @@ export default function App() {
         language={language}
         overdueTasksCount={overdueTasksCount}
       />
+
+      {/* Admin Sub-channel management */}
+      {isSubChannelManagerOpen && currentUser.role === 'admin' && (
+        <SubChannelManager language={language} onClose={() => setIsSubChannelManagerOpen(false)} onRefreshData={loadData} />
+      )}
 
       {/* App Branding & Logo Customization Modal */}
       <AppBrandingModal
