@@ -84,3 +84,40 @@ test('fresh-project SQL executes as a single transaction and imports exactly 117
     assert.equal((await db.query<{ n: number }>('select count(*)::int as n from public.profiles')).rows[0].n, 0);
   } finally { await db.close(); }
 });
+
+test('Admin prepares B1–B7 access; only verified matching emails claim it and each sees its own outlets', { timeout:30000 }, async () => {
+ const db=new PGlite({extensions:{'uuid-ossp':uuid_ossp,pgcrypto}});
+ try {
+  await db.exec(scaffold);await db.exec(fs.readFileSync(root+'/supabase/outlet-fresh-setup.sql','utf8'));
+  const admin=crypto.randomUUID();
+  await db.query("INSERT INTO auth.users(id,email,email_confirmed_at) VALUES($1,'owner@example.test',now())",[admin]);
+  await db.query("INSERT INTO public.profiles(id,email,full_name,role) VALUES($1,'owner@example.test','Owner','admin')",[admin]);
+  async function asUser(id:string){await db.exec('RESET ROLE');await db.query("SELECT set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('SET ROLE authenticated');}
+  for(let i=0;i<7;i++){
+   const user=crypto.randomUUID(), email=`b${i+1}@example.test`, mde=data.mdes[i];
+   await asUser(admin);
+   const result=await db.query<{status:string}>('SELECT public.admin_assign_user($1,$2,$3) AS status',[` ${email.toUpperCase()} `,`B${i+1}`,mde.id]);
+   assert.equal(result.rows[0].status,'pending');
+   await db.exec('RESET ROLE');await db.query('INSERT INTO auth.users(id,email) VALUES($1,$2)',[user,email]);
+   await asUser(user);await assert.rejects(()=>db.query('SELECT public.ensure_my_profile()'),/verified account/);
+   await db.exec('RESET ROLE');await db.query('UPDATE auth.users SET email_confirmed_at=now() WHERE id=$1',[user]);
+   await asUser(user);await db.query('SELECT public.ensure_my_profile()');
+   const profile=(await db.query<{role:string;mde_id:string}>('SELECT role,mde_id FROM public.profiles WHERE id=$1',[user])).rows[0];
+   assert.equal(profile.role,'sales');assert.equal(profile.mde_id,mde.id);
+   const visible=await db.query<{mde_id:string}>('SELECT mde_id FROM public.stores');
+   assert.equal(visible.rows.length,data.outlets.filter(o=>o.mdeId===mde.id).length);assert(visible.rows.every(row=>row.mde_id===mde.id));
+   assert.equal((await db.query('SELECT * FROM public.app_user_assignments')).rows.length,0);
+   await assert.rejects(()=>db.query('SELECT public.admin_assign_user($1,$2,$3)',[email,'Hacked',data.mdes[(i+1)%7].id]),/Administrator access/);
+   await assert.rejects(()=>db.query('UPDATE public.app_user_assignments SET mde_id=$1',[data.mdes[(i+1)%7].id]),/permission denied/);
+   await db.query('SELECT public.ensure_my_profile()');
+   assert.equal((await db.query<{mde_id:string}>('SELECT mde_id FROM public.profiles WHERE id=$1',[user])).rows[0].mde_id,mde.id);
+   await asUser(admin);
+   assert.equal((await db.query<{status:string}>('SELECT public.admin_assign_user($1,$2,$3) AS status',[email,'Updated name',mde.id])).rows[0].status,'assigned');
+  }
+  await asUser(admin);
+  await assert.rejects(()=>db.query('SELECT public.admin_assign_user($1,$2,$3)',['owner@example.test','Downgrade',data.mdes[0].id]),/Admin account/);
+  await assert.rejects(()=>db.query('SELECT public.admin_assign_user($1,$2,$3)',['invalid','Name',data.mdes[0].id]),/valid email/);
+  await db.exec('RESET ROLE;SET ROLE anon');
+  await assert.rejects(()=>db.query('SELECT public.admin_assign_user($1,$2,$3)',['anon@example.test','Anon',data.mdes[0].id]),/permission denied/);
+ } finally {await db.close();}
+});

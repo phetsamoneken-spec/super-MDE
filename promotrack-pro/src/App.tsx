@@ -164,7 +164,7 @@ export default function App() {
   if (supabaseEnabled) {
     if (!authReady) return <main className="min-h-screen flex items-center justify-center p-6">{language === 'lo' ? 'ກຳລັງໂຫຼດ…' : 'Loading…'}</main>;
     if (!session) return <SupabaseSignIn language={language} />;
-    if (!syncState.user || syncState.status === 'loading') return <main className="min-h-screen flex items-center justify-center p-6"><section className="calm-card rounded-3xl p-6 space-y-4 max-w-lg">
+    if (!syncState.user) return <main className="min-h-screen flex items-center justify-center p-6"><section className="calm-card rounded-3xl p-6 space-y-4 max-w-lg">
       <h1 className="font-bold">{language === 'lo' ? 'ກຳລັງເຊື່ອມຂໍ້ມູນ…' : 'Connecting your account…'}</h1>
       {syncState.status === 'error' && <><p role="alert">{syncState.message}</p><button onClick={() => { sync.current?.stop(); const connection = new SupabaseSync(supabase, projectRef, session.user.id, (state) => { setSyncState(state); if (state.user) setCurrentUser(state.user); }); sync.current = connection; void connection.start(); }} className="rounded-xl border p-3">{language === 'lo' ? 'ລອງໃໝ່' : 'Retry'}</button></>}
       <button onClick={signOut} className="block underline">{language === 'lo' ? 'ອອກຈາກລະບົບ' : 'Sign out'}</button>
@@ -352,7 +352,7 @@ export default function App() {
 
           {/* Tab 7: User Management System (Admin Only) */}
           {currentTab === 'users' && (
-            supabaseEnabled ? <RemoteAccountsView currentUser={currentUser} language={language} /> :
+            supabaseEnabled ? <RemoteAccountsView currentUser={currentUser} language={language} onRefresh={async () => { await sync.current?.reload(); }} /> :
             <UserManagementView
               currentUser={currentUser}
               language={language}

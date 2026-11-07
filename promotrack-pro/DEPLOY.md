@@ -9,7 +9,7 @@ workflow changes on `main`, and can also be run manually in Actions.
 
 The workflow installs `bun.lock` with Bun 1.4.4, runs app/database tests and the TypeScript check, builds
 with the Pages base path, and deploys `dist`. Only the project URL and browser publishable key are bundled. Management tokens and service-role keys must never be included. The expected project URL is
-https://phetsamoneken-spec.github.io/bundo/ after a successful deployment.
+https://phetsamoneken-spec.github.io/super-MDE/ after a successful deployment.
 
 Local validation:
 
@@ -17,7 +17,7 @@ Local validation:
 cd /workspace/bundo/promotrack-pro
 bun install --frozen-lockfile
 npm run lint
-npm run build -- --base=/bundo/
+npm run build -- --base=/super-MDE/
 ```
 
 Manifest icons, service worker scope, offline navigation fallback, and the Excel
@@ -34,4 +34,4 @@ for the exact schema and requirements for applying it to a remote project.
 The workflow publishes PromoTrack as this repository's Pages site. It does not
 delete the preserved POS source at the repository root.
 
-Before account activation, set Supabase Authentication → URL Configuration Site URL to `https://phetsamoneken-spec.github.io/bundo/` and allow the same Redirect URL. The management token available during setup lacked Auth configuration permissions, so this Dashboard step remains manual. The owner creates their account using the designated Admin email, chooses their own password and confirms the email. No invitation is sent by deployment.
+Before account activation, set Supabase Authentication → URL Configuration Site URL to `https://phetsamoneken-spec.github.io/super-MDE/` and allow the same Redirect URL. The management token available during setup lacked Auth configuration permissions, so this Dashboard step remains manual. The owner creates their account using the designated Admin email, chooses their own password and confirms the email. No invitation is sent by deployment.

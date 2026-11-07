@@ -24,7 +24,7 @@ npm run lint
 npm run dev -- --strictPort
 ```
 
-The deployment workflow uses Node 24 and Bun 1.4.4, runs tests and TypeScript, builds with `npm run build -- --base=/bundo/`, and deploys to GitHub Pages. Build generates the reviewed dataset and SQL from the supplied workbook; it does not execute SQL.
+The deployment workflow uses Node 24 and Bun 1.4.4, runs tests and TypeScript, builds with `npm run build -- --base=/super-MDE/`, and deploys to GitHub Pages. Build generates the reviewed dataset and SQL from the supplied workbook; it does not execute SQL.
 
 ## Existing features
 

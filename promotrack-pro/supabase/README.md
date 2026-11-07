@@ -39,7 +39,7 @@ bun install --frozen-lockfile
 npm run data:generate
 npm test
 npm run lint
-npm run build -- --base=/bundo/
+npm run build -- --base=/super-MDE/
 ```
 
 The generator checks exact headers, completeness, unique codes, and category parents. It emits the JSON used by the frontend, the SQL seed, the fresh-project SQL, and a blank nine-column import template. It does not execute SQL or evaluate spreadsheet formulas.
@@ -57,6 +57,12 @@ Expected MDE counts in workbook order: 169, 181, 157, 172, 163, 174, 162.
 
 ## Account activation
 
-Set Authentication → URL Configuration Site URL and Redirect URL to `https://phetsamoneken-spec.github.io/bundo/`. This remains a manual Dashboard step because the available management credential lacks `auth_config_read`/write access. Register with the designated owner email and a password chosen privately, confirm the email, then sign in. No owner password, Auth account, or email invitation was created during setup.
+Set Authentication → URL Configuration Site URL and Redirect URL to `https://phetsamoneken-spec.github.io/super-MDE/`. This remains a manual Dashboard step because the available management credential lacks `auth_config_read`/write access. Register with the designated owner email and a password chosen privately, confirm the email, then sign in. No owner password, Auth account, or email invitation was created during setup.
 
 Deleting an app profile removes its assignment, not the Supabase Auth account. Use Supabase Authentication to disable/delete a login. A deleted profile may be recreated as unassigned on its next sign-in; a verified allowlisted owner regains Admin.
+
+## Admin adds Sales users (B1–B7)
+
+In User Management choose **Add user**, enter the colleague’s name and email, and select B1–B7. `admin_assign_user` checks Admin privileges on the server. For an already verified Auth account it creates/updates its Sales profile immediately. Otherwise it stores pending access in the Admin-only `app_user_assignments` table. The colleague registers using the same email, chooses their password, and confirms their email. `ensure_my_profile` consumes the matching pending assignment once. No invitation or email is sent by adding an assignment, and no password or Auth secret is handled by Admin’s browser.
+
+Pending assignments can be edited or deleted. Existing user profiles retain the Edit action for changing MDE. The database applies the assignment to every outlet read/write through existing RLS, not just frontend filtering. Admin accounts cannot be converted to Sales via this function. Sales and anonymous callers cannot create assignments or read their list. The migration is `20261107020000_user_assignments.sql`.
