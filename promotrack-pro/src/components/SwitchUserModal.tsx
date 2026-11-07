@@ -1,3 +1,4 @@
+import { avatarFor } from '../utils/avatar';
 import React from 'react';
 import { UserCheck, Shield, User, X, CheckCircle } from 'lucide-react';
 import { UserProfile, Language } from '../types';
@@ -81,7 +82,7 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <img
-                    src={user.avatarUrl}
+                    src={avatarFor(user)}
                     alt={user.fullName}
                     className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500/20"
                   />

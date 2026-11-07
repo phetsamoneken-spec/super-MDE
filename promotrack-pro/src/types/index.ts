@@ -5,6 +5,7 @@
 export type UserRole = 'admin' | 'sales';
 
 export interface UserProfile {
+  mdeId?: string;
   id: string;
   email: string;
   fullName: string;
@@ -22,6 +23,7 @@ export type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Cancelled';
 export type TaskPriority = 'Low' | 'Medium' | 'High';
 
 export interface Channel {
+  mainChannelId?: string;
   id: string;
   name: string;
   description?: string;
@@ -35,6 +37,15 @@ export interface SubChannel {
 }
 
 export interface Store {
+  mdeId?: string;
+  mdeName?: string;
+  mainChannel?: string;
+  mainChannelId?: string;
+  channelId?: string;
+  subChannelId?: string;
+  village?: string;
+  district?: string;
+  province?: string;
   id: string;
   storeCode: string;
   storeName: string;
@@ -106,6 +117,10 @@ export interface OrderStatusHistory {
 }
 
 export interface ExcelImportRow {
+  mainChannel?: string;
+  village?: string;
+  district?: string;
+  province?: string;
   storeCode: string;
   storeName: string;
   channel: string;

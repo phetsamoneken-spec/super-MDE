@@ -1,3 +1,4 @@
+import { avatarFor } from '../utils/avatar';
 import React from 'react';
 import {
   LayoutDashboard,
@@ -150,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="p-3 rounded-2xl bg-[var(--color-surface-secondary)] border border-[var(--color-border)]">
             <div className="flex items-center gap-2.5">
               <img
-                src={currentUser.avatarUrl}
+                src={avatarFor(currentUser)}
                 alt={currentUser.fullName}
                 className="w-9 h-9 rounded-xl object-cover ring-2 ring-[var(--color-primary)]"
               />

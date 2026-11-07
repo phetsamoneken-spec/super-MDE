@@ -1,3 +1,4 @@
+import { avatarFor } from '../utils/avatar';
 import React, { useState, useMemo } from 'react';
 import {
   Store as StoreIcon,
@@ -96,12 +97,14 @@ export const StoresView: React.FC<StoresViewProps> = ({
   const [formData, setFormData] = useState({
     storeCode: '',
     storeName: '',
-    channel: 'Modern Trade',
-    subChannel: 'Supermarket',
+    channel: channels[0]?.name || '',
+    subChannel: subChannels.find((item) => item.channelId === channels[0]?.id)?.name || '',
     assignedSalesUser: salesReps[0]?.id || currentUser.id,
     phone: '',
     address: '',
-    city: 'Vientiane Capital'
+    city: '',
+    village: '',
+    district: ''
   });
   const [formError, setFormError] = useState('');
 
@@ -128,7 +131,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
         const query = searchTerm.toLowerCase();
         const matchesCode = store.storeCode.toLowerCase().includes(query);
         const matchesName = store.storeName.toLowerCase().includes(query);
-        const matchesCity = (store.city || '').toLowerCase().includes(query);
+        const matchesCity = [store.mainChannel, store.subChannel, store.mdeName, store.village, store.district, store.province, store.city].some((value) => value?.toLowerCase().includes(query));
         if (!matchesCode && !matchesName && !matchesCity) return false;
       }
 
@@ -160,14 +163,16 @@ export const StoresView: React.FC<StoresViewProps> = ({
   const openAddModal = () => {
     triggerHaptic('medium');
     setFormData({
-      storeCode: `STR-${Math.floor(100 + Math.random() * 900)}`,
+      storeCode: '',
       storeName: '',
-      channel: channels[0]?.name || 'Modern Trade',
-      subChannel: 'Supermarket',
+      channel: channels[0]?.name || '',
+      subChannel: subChannels.find((item) => item.channelId === channels[0]?.id)?.name || '',
       assignedSalesUser: salesReps[0]?.id || currentUser.id,
       phone: '',
       address: '',
-      city: 'Vientiane Capital'
+      city: '',
+      village: '',
+      district: ''
     });
     setFormError('');
     setIsAddModalOpen(true);
@@ -184,7 +189,9 @@ export const StoresView: React.FC<StoresViewProps> = ({
       assignedSalesUser: store.assignedSalesUser,
       phone: store.phone || '',
       address: store.address || '',
-      city: store.city || 'Vientiane Capital'
+      city: store.province || store.city || '',
+      village: store.village || '',
+      district: store.district || ''
     });
     setFormError('');
   };
@@ -230,7 +237,11 @@ export const StoresView: React.FC<StoresViewProps> = ({
         assignedSalesUser: formData.assignedSalesUser,
         phone: formData.phone,
         address: formData.address,
-        city: formData.city
+        city: formData.city,
+        province: formData.city,
+        village: formData.village,
+        district: formData.district,
+        mainChannel: dataService.getMainChannelName(formData.channel)
       });
       if (!res.success) {
         setFormError(res.error || 'Failed to update store.');
@@ -247,6 +258,10 @@ export const StoresView: React.FC<StoresViewProps> = ({
         phone: formData.phone,
         address: formData.address,
         city: formData.city,
+        province: formData.city,
+        village: formData.village,
+        district: formData.district,
+        mainChannel: dataService.getMainChannelName(formData.channel),
         isActive: true
       });
       if (!res.success) {
@@ -502,11 +517,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
               className="text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] py-2 px-2 text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)]"
             >
               <option value="all">{t.allChannels}</option>
-              <option value="Modern Trade">Modern Trade</option>
-              <option value="General Trade">General Trade</option>
-              <option value="Convenience Store (CVS)">CVS</option>
-              <option value="Wholesale">Wholesale</option>
-              <option value="HORECA">HORECA</option>
+              {channels.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}
             </select>
 
             <select
@@ -519,13 +530,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
               className="text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] py-2 px-2 text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)]"
             >
               <option value="all">{t.allSubChannels}</option>
-              <option value="Hypermarket">Hypermarket</option>
-              <option value="Supermarket">Supermarket</option>
-              <option value="Medium Grocery">Medium Grocery</option>
-              <option value="Chain CVS">Chain CVS</option>
-              <option value="Cash & Carry">Cash & Carry</option>
-              <option value="Hotel & Resort">Hotel & Resort</option>
-              <option value="Restaurant/Cafe">Restaurant/Cafe</option>
+              {subChannels.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}
             </select>
 
             <select
@@ -613,7 +618,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                     <div className="flex items-center justify-between pt-1 text-xs">
                       <div className="text-[var(--color-text-secondary)] flex items-center gap-1.5">
                         <img
-                          src={rep?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80'}
+                          src={avatarFor(rep)}
                           alt={rep?.fullName}
                           className="w-4 h-4 rounded-full object-cover"
                         />
@@ -674,10 +679,14 @@ export const StoresView: React.FC<StoresViewProps> = ({
                   <tr>
                     <th className="py-3 px-4">{t.storeCode}</th>
                     <th className="py-3 px-4">{t.storeName}</th>
+                    <th className="py-3 px-4">Main channel</th>
                     <th className="py-3 px-4">{t.channel}</th>
+                    <th className="py-3 px-4">Sub-channel</th>
                     <th className="py-3 px-4">Order Status (Current Promo)</th>
                     <th className="py-3 px-4">{t.assignedSales}</th>
-                    <th className="py-3 px-4">{t.city}</th>
+                    <th className="py-3 px-4">{language === 'lo' ? 'ບ້ານ' : 'Village'}</th>
+                    <th className="py-3 px-4">{language === 'lo' ? 'ເມືອງ' : 'District'}</th>
+                    <th className="py-3 px-4">{language === 'lo' ? 'ແຂວງ' : 'Province'}</th>
                     <th className="py-3 px-4 text-right">{t.actions}</th>
                   </tr>
                 </thead>
@@ -700,11 +709,13 @@ export const StoresView: React.FC<StoresViewProps> = ({
                         <td className="py-3 px-4 font-semibold text-[var(--color-text-primary)]">
                           {store.storeName}
                         </td>
+                        <td className="py-3 px-4">{store.mainChannel || dataService.getMainChannelName(store.channel)}</td>
                         <td className="py-3 px-4">
                           <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--color-surface-secondary)] text-[var(--color-text-secondary)] border border-[var(--color-border)]">
                             {store.channel}
                           </span>
                         </td>
+                        <td className="py-3 px-4">{store.subChannel}</td>
                         <td className="py-3 px-4">
                           {getStatusBadge(ps?.orderStatus)}
                         </td>
@@ -712,7 +723,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                           {rep ? (
                             <div className="flex items-center gap-1.5">
                               <img
-                                src={rep.avatarUrl}
+                                src={avatarFor(rep)}
                                 alt={rep.fullName}
                                 className="w-5 h-5 rounded-full object-cover"
                               />
@@ -724,8 +735,10 @@ export const StoresView: React.FC<StoresViewProps> = ({
                             <span className="text-slate-400">Unassigned</span>
                           )}
                         </td>
+                        <td className="py-3 px-4">{store.village}</td>
+                        <td className="py-3 px-4">{store.district}</td>
                         <td className="py-3 px-4 text-[var(--color-text-secondary)]">
-                          {store.city || 'Vientiane'}
+                          {store.province || store.city || ''}
                         </td>
                         <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1">
@@ -846,7 +859,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                     <span>•</span>
                     <span>{detailStore.subChannel}</span>
                     <span>•</span>
-                    <span>{detailStore.city || 'Vientiane Capital'}</span>
+                    <span>{detailStore.province || detailStore.city || ''}</span>
                   </div>
                 </div>
 
@@ -860,6 +873,16 @@ export const StoresView: React.FC<StoresViewProps> = ({
               </div>
 
               {/* Quick Contact & Info Grid */}
+              <dl className="grid grid-cols-2 gap-3 text-xs">
+                {[
+                  ['Main channel', detailStore.mainChannel || dataService.getMainChannelName(detailStore.channel)],
+                  ['Channel', detailStore.channel], ['Sub-channel', detailStore.subChannel],
+                  ['MDE', detailStore.mdeName || salesMap.get(detailStore.assignedSalesUser)?.fullName],
+                  [language === 'lo' ? 'ບ້ານ' : 'Village', detailStore.village],
+                  [language === 'lo' ? 'ເມືອງ' : 'District', detailStore.district],
+                  [language === 'lo' ? 'ແຂວງ' : 'Province', detailStore.province || detailStore.city]
+                ].map(([label, value]) => <div key={label}><dt className="text-[var(--color-text-secondary)]">{label}</dt><dd className="font-semibold break-words">{value || '—'}</dd></div>)}
+              </dl>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {detailStore.phone && (
                   <a
@@ -1133,7 +1156,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                     required
                     value={formData.storeName}
                     onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
-                    placeholder="e.g. Vientiane Mart Dongdok"
+                    placeholder={language === 'lo' ? 'ຊື່ຮ້ານຄ້າ' : 'Outlet name'}
                     className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
                   />
                 </div>
@@ -1147,7 +1170,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                       type="text"
                       value={formData.subChannel}
                       onChange={(e) => setFormData({ ...formData, subChannel: e.target.value })}
-                      placeholder="e.g. Supermarket"
+                      placeholder="Sub-channel"
                       list="store-sub-channel-options"
                       className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
                     />
@@ -1159,7 +1182,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1">
-                      {t.assignedSales}
+                      MDE
                     </label>
                     <select
                       value={formData.assignedSalesUser}
@@ -1188,13 +1211,13 @@ export const StoresView: React.FC<StoresViewProps> = ({
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1">
-                      {t.city}
+                      {language === 'lo' ? 'ແຂວງ' : 'Province'}
                     </label>
                     <input
                       type="text"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      placeholder="Vientiane Capital"
+                      placeholder={language === 'lo' ? 'ແຂວງ' : 'Province'}
                       className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
                     />
                   </div>
@@ -1211,6 +1234,15 @@ export const StoresView: React.FC<StoresViewProps> = ({
                     placeholder="Village, District"
                     className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <label className="text-xs">{language === 'lo' ? 'ບ້ານ' : 'Village'}
+                    <input aria-label={language === 'lo' ? 'ບ້ານ' : 'Village'} value={formData.village} onChange={(event) => setFormData({ ...formData, village: event.target.value })} className="w-full rounded-xl border border-[var(--color-border)] p-2.5" />
+                  </label>
+                  <label className="text-xs">{language === 'lo' ? 'ເມືອງ' : 'District'}
+                    <input aria-label={language === 'lo' ? 'ເມືອງ' : 'District'} value={formData.district} onChange={(event) => setFormData({ ...formData, district: event.target.value })} className="w-full rounded-xl border border-[var(--color-border)] p-2.5" />
+                  </label>
                 </div>
 
                 <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--color-border)]">

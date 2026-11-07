@@ -189,7 +189,7 @@ export const ExcelModuleView: React.FC<ExcelModuleViewProps> = ({
                       Step 1: Select File (.xlsx, .xls, .csv)
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Columns: Store Code, Store Name, Channel, Sub Channel, Assigned Sales
+                      MDE NAME · OUTLET CODE · OUTLET · MIAN CHANEL · CHENEL · SUB-CHANEL · VILLAG · DISTRICT · PROVINCE
                     </p>
                   </div>
 
@@ -314,8 +314,13 @@ export const ExcelModuleView: React.FC<ExcelModuleViewProps> = ({
                           <th className="py-2.5 px-3">#</th>
                           <th className="py-2.5 px-3">Store Code</th>
                           <th className="py-2.5 px-3">Store Name</th>
-                          <th className="py-2.5 px-3">Channel</th>
+                          <th className="py-2.5 px-3">MDE NAME</th>
+                          <th className="py-2.5 px-3">MIAN CHANEL</th>
+                          <th className="py-2.5 px-3">CHENEL</th>
                           <th className="py-2.5 px-3">Sub Channel</th>
+                          <th className="py-2.5 px-3">VILLAG</th>
+                          <th className="py-2.5 px-3">DISTRICT</th>
+                          <th className="py-2.5 px-3">PROVINCE</th>
                           <th className="py-2.5 px-3">Status</th>
                         </tr>
                       </thead>
@@ -325,10 +330,15 @@ export const ExcelModuleView: React.FC<ExcelModuleViewProps> = ({
                             <td className="py-2 px-3 text-slate-400">{idx + 1}</td>
                             <td className="py-2 px-3 font-mono font-bold">{row.storeCode}</td>
                             <td className="py-2 px-3">{row.storeName}</td>
+                            <td className="py-2 px-3">{row.assignedSales}</td>
+                            <td className="py-2 px-3">{row.mainChannel}</td>
                             <td className="py-2 px-3">{row.channel}</td>
                             <td className="py-2 px-3">{row.subChannel}</td>
+                            <td className="py-2 px-3">{row.village}</td>
+                            <td className="py-2 px-3">{row.district}</td>
+                            <td className="py-2 px-3">{row.province}</td>
                             <td className="py-2 px-3">
-                              {row.isDuplicate ? (
+                              {!row.isValid ? <span className="text-rose-600">{row.errors?.join(", ")}</span> : row.isDuplicate ? (
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                                   Duplicate ({duplicateStrategy})
                                 </span>
@@ -374,7 +384,7 @@ export const ExcelModuleView: React.FC<ExcelModuleViewProps> = ({
                         {t.importSuccessSummary}
                       </h3>
                       <p className="text-xs text-slate-500">
-                        {language === 'lo' ? 'ຖານຂໍ້ມູນຮ້ານຄ້າໄດ້ຖືກອັບເດດຮຽບຮ້ອຍແລ້ວ' : 'The store database has been updated and synchronized.'}
+                        {language === 'lo' ? 'ຖານຂໍ້ມູນຮ້ານຄ້າໄດ້ຖືກອັບເດດຮຽບຮ້ອຍແລ້ວ' : 'Outlet data has been saved in this browser.'}
                       </p>
                     </div>
                   </div>

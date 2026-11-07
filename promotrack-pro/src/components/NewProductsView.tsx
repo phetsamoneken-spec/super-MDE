@@ -50,13 +50,7 @@ interface NewProductsViewProps {
   onNavigateTab: (tab: string) => void;
 }
 
-const PRESET_PRODUCT_IMAGES = [
-  'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=600&auto=format&fit=crop&q=80'
-];
+const PRESET_PRODUCT_IMAGES = [''];
 
 export const NewProductsView: React.FC<NewProductsViewProps> = ({
   onManageSubChannels,
@@ -243,7 +237,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
       description: '',
       imageUrl: PRESET_PRODUCT_IMAGES[0],
       status: 'Active',
-      targetSubChannels: ['Hypermarket', 'Supermarket', 'Chain CVS', 'Gas Station CVS']
+      targetSubChannels: []
     });
     setFormError('');
     setIsCreateModalOpen(true);
@@ -710,7 +704,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                     {/* Image and Header */}
                     <div className="relative h-40 bg-slate-100 dark:bg-slate-800">
                       <img
-                        src={product.imageUrl || PRESET_PRODUCT_IMAGES[0]}
+                        src={product.imageUrl || `${import.meta.env.BASE_URL}icons/image-placeholder.svg`}
                         alt={product.productName}
                         className="w-full h-full object-cover"
                       />
@@ -1768,7 +1762,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                   </label>
                   <div className="flex items-center gap-3">
                     <img
-                      src={formData.imageUrl}
+                      src={formData.imageUrl || `${import.meta.env.BASE_URL}icons/image-placeholder.svg`}
                       alt="Product Preview"
                       className="w-16 h-16 rounded-2xl object-cover ring-2 ring-[var(--color-primary)] shrink-0"
                     />

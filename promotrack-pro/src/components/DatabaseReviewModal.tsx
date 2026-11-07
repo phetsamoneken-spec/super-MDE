@@ -1,3 +1,7 @@
+import initialSchema from '../../supabase/migrations/20251105000000_initial_schema.sql?raw';
+import outletSchema from '../../supabase/migrations/20261107000000_outlet_workbook.sql?raw';
+import rowSecurity from '../../supabase/migrations/20251105000001_rls_policies.sql?raw';
+import storageSchema from '../../supabase/migrations/20251105000002_storage_policies.sql?raw';
 import React, { useState } from 'react';
 import {
   Database,
@@ -30,201 +34,9 @@ export const DatabaseReviewModal: React.FC<DatabaseReviewModalProps> = ({
 
   if (!isOpen) return null;
 
-  const schemaSQL = `-- Supabase PostgreSQL Schema Draft (Phase 2 Review)
--- File: supabase/migrations/20251105000000_initial_schema.sql
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
--- Profiles (Linked to auth.users)
-CREATE TABLE public.profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email TEXT NOT NULL UNIQUE,
-  full_name TEXT NOT NULL,
-  phone TEXT,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'sales')),
-  avatar_url TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Channels & Sub Channels
-CREATE TABLE public.channels (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL UNIQUE,
-  description TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE public.sub_channels (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  channel_id UUID NOT NULL REFERENCES public.channels(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  description TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(channel_id, name)
-);
-
--- Stores
-CREATE TABLE public.stores (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_code TEXT NOT NULL UNIQUE,
-  store_name TEXT NOT NULL,
-  channel TEXT NOT NULL,
-  sub_channel TEXT NOT NULL,
-  assigned_sales_user UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
-  phone TEXT,
-  address TEXT,
-  city TEXT DEFAULT 'Vientiane',
-  is_active BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Promotions
-CREATE TABLE public.promotions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  promotion_name TEXT NOT NULL,
-  description TEXT,
-  start_date DATE NOT NULL,
-  end_date DATE NOT NULL,
-  image_url TEXT,
-  image_path TEXT,
-  status TEXT NOT NULL CHECK (status IN ('Draft', 'Active', 'Completed', 'Cancelled')) DEFAULT 'Draft',
-  created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT check_promotion_dates CHECK (end_date >= start_date)
-);
-
--- Promotion Stores Tracking
-CREATE TABLE public.promotion_stores (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id UUID NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  promotion_id UUID NOT NULL REFERENCES public.promotions(id) ON DELETE CASCADE,
-  order_status TEXT NOT NULL CHECK (order_status IN ('Not Ordered', 'Follow-up Required', 'Ordered', 'Cancelled')) DEFAULT 'Not Ordered',
-  order_date TIMESTAMPTZ,
-  order_amount NUMERIC(12, 2) DEFAULT 0.00,
-  last_follow_up_date TIMESTAMPTZ,
-  next_follow_up_date TIMESTAMPTZ,
-  remark TEXT,
-  updated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(store_id, promotion_id)
-);
-
--- Follow Up Tasks (To-Do List)
-CREATE TABLE public.follow_up_tasks (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id UUID NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  promotion_id UUID REFERENCES public.promotions(id) ON DELETE SET NULL,
-  assigned_user UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  task_title TEXT NOT NULL,
-  due_date TIMESTAMPTZ NOT NULL,
-  priority TEXT NOT NULL CHECK (priority IN ('Low', 'Medium', 'High')) DEFAULT 'Medium',
-  task_status TEXT NOT NULL CHECK (task_status IN ('Pending', 'In Progress', 'Completed', 'Cancelled')) DEFAULT 'Pending',
-  remark TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Order Status Audit History
-CREATE TABLE public.order_status_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  promotion_store_id UUID NOT NULL REFERENCES public.promotion_stores(id) ON DELETE CASCADE,
-  store_id UUID NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  promotion_id UUID NOT NULL REFERENCES public.promotions(id) ON DELETE CASCADE,
-  old_status TEXT,
-  new_status TEXT NOT NULL,
-  changed_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
-  notes TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);`;
-
-  const rlsSQL = `-- Supabase PostgreSQL Row Level Security Policies Draft
--- File: supabase/migrations/20251105000001_rls_policies.sql
-
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
-
-CREATE OR REPLACE FUNCTION public.is_store_assigned_to_me(p_store_id UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.stores
-    WHERE id = p_store_id AND assigned_sales_user = auth.uid()
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
-
--- Stores Table RLS:
--- Admin can view all stores; Sales can only view assigned stores
-CREATE POLICY "stores_select_policy" ON public.stores FOR SELECT TO authenticated
-  USING (public.is_admin() OR assigned_sales_user = auth.uid());
-
--- Only Admin can insert, update, and delete stores
-CREATE POLICY "stores_insert_admin_only" ON public.stores FOR INSERT TO authenticated
-  WITH CHECK (public.is_admin());
-
-CREATE POLICY "stores_update_admin_only" ON public.stores FOR UPDATE TO authenticated
-  USING (public.is_admin()) WITH CHECK (public.is_admin());
-
-CREATE POLICY "stores_delete_admin_only" ON public.stores FOR DELETE TO authenticated
-  USING (public.is_admin());
-
--- Promotion Stores Tracking Table RLS:
--- Admin sees all; Sales user only sees participating stores assigned to them
-CREATE POLICY "promotion_stores_select_policy" ON public.promotion_stores FOR SELECT TO authenticated
-  USING (public.is_admin() OR public.is_store_assigned_to_me(store_id));
-
--- Sales can update order status, amounts, and follow-up remarks for their assigned stores
-CREATE POLICY "promotion_stores_update_policy" ON public.promotion_stores FOR UPDATE TO authenticated
-  USING (public.is_admin() OR public.is_store_assigned_to_me(store_id))
-  WITH CHECK (public.is_admin() OR public.is_store_assigned_to_me(store_id));
-
--- Tasks Table RLS:
--- Sales user can only view, create, and update tasks assigned to them
-CREATE POLICY "tasks_select_policy" ON public.follow_up_tasks FOR SELECT TO authenticated
-  USING (public.is_admin() OR assigned_user = auth.uid());
-
-CREATE POLICY "tasks_insert_policy" ON public.follow_up_tasks FOR INSERT TO authenticated
-  WITH CHECK (public.is_admin() OR (assigned_user = auth.uid() AND public.is_store_assigned_to_me(store_id)));`;
-
-  const storageSQL = `-- Supabase Storage Bucket & Security Policies Draft
--- File: supabase/migrations/20251105000002_storage_policies.sql
-
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'promotion-images',
-  'promotion-images',
-  true,
-  5242880, -- 5 MB Limit
-  ARRAY['image/jpeg', 'image/png', 'image/webp']
-)
-ON CONFLICT (id) DO UPDATE SET
-  public = true,
-  file_size_limit = 5242880,
-  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp'];
-
--- Storage Security Policies:
--- Authenticated users can view promotion images
-CREATE POLICY "promotion_images_read_policy" ON storage.objects FOR SELECT TO authenticated
-  USING (bucket_id = 'promotion-images');
-
--- Only Admins can upload, replace, or delete promotion images
-CREATE POLICY "promotion_images_insert_admin_only" ON storage.objects FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'promotion-images' AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-
-CREATE POLICY "promotion_images_delete_admin_only" ON storage.objects FOR DELETE TO authenticated
-  USING (bucket_id = 'promotion-images' AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));`;
+  const schemaSQL = initialSchema + '\n' + outletSchema;
+  const rlsSQL = rowSecurity + '\n' + outletSchema;
+  const storageSQL = storageSchema;
 
   const getCurrentCode = () => {
     switch (activeTab) {
@@ -260,7 +72,7 @@ CREATE POLICY "promotion_images_delete_admin_only" ON storage.objects FOR DELETE
                 Supabase Architecture & Security Review
               </h3>
               <p className="text-xs text-slate-500">
-                Phase 2 Database Migrations, RLS Policies, and Storage Specs (Review Only)
+                outlet.xlsx: nine source columns, MDE assignments, and access policies (SQL prepared; live application requires project access)
               </p>
             </div>
           </div>

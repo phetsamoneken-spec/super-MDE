@@ -1,3 +1,4 @@
+import { avatarFor } from '../utils/avatar';
 import React, { useState, useMemo } from 'react';
 import {
   Store as StoreIcon,
@@ -143,7 +144,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="flex items-center justify-between pb-1">
         <div className="flex items-center gap-3">
           <img
-            src={currentUser.avatarUrl}
+            src={avatarFor(currentUser)}
             alt={currentUser.fullName}
             className="w-11 h-11 rounded-2xl object-cover ring-2 ring-[var(--color-primary)]"
           />
@@ -518,7 +519,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {/* 1. Large Image Banner */}
                 <div className="relative h-36 sm:h-44 w-full bg-slate-950 overflow-hidden">
                   <img
-                    src={promo.imageUrl || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop&q=80'}
+                    src={promo.imageUrl || `${import.meta.env.BASE_URL}icons/image-placeholder.svg`}
                     alt={promo.promotionName}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
                   />

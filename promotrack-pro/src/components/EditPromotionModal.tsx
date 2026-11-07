@@ -68,7 +68,7 @@ export const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
         startDate: new Date().toISOString().substring(0, 10),
         endDate: new Date(Date.now() + 30 * 86400000).toISOString().substring(0, 10),
         status: 'Active',
-        imageUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop&q=80',
+        imageUrl: '',
         targetSubChannels: []
       });
       setImagePreview('');
@@ -157,7 +157,7 @@ export const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
         startDate: formData.startDate,
         endDate: formData.endDate,
         status: formData.status,
-        imageUrl: formData.imageUrl || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800',
+        imageUrl: formData.imageUrl,
         targetSubChannels: formData.targetSubChannels
       });
       if (!res.success) {

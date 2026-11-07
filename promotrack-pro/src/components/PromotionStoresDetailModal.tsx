@@ -214,7 +214,7 @@ export const PromotionStoresDetailModal: React.FC<PromotionStoresDetailModalProp
         {/* 1. Large Hero Header Banner */}
         <div className="relative h-44 sm:h-52 bg-slate-950 overflow-hidden shrink-0">
           <img
-            src={promotion.imageUrl || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1000&auto=format&fit=crop&q=80'}
+            src={promotion.imageUrl || `${import.meta.env.BASE_URL}icons/image-placeholder.svg`}
             alt={promotion.promotionName}
             className="w-full h-full object-cover opacity-85"
           />

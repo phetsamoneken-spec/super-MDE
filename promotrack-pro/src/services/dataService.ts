@@ -30,22 +30,26 @@ import {
   INITIAL_AUDIT_LOGS,
   INITIAL_NEW_PRODUCTS,
   INITIAL_NEW_PRODUCT_STORE_ORDERS
-} from './mockData';
+} from './workbookData';
+import { DATASET_VERSION, OUTLET_DATASET } from './workbookData';
 import * as XLSX from 'xlsx';
 
-const STORAGE_KEYS = {
-  CURRENT_USER: 'promotrack_current_user',
-  USERS: 'promotrack_users',
-  CHANNELS: 'promotrack_channels',
-  SUB_CHANNELS: 'promotrack_sub_channels',
-  STORES: 'promotrack_stores',
-  PROMOTIONS: 'promotrack_promotions',
-  PROMOTION_STORES: 'promotrack_promo_stores',
-  NEW_PRODUCTS: 'promotrack_new_products',
-  NEW_PRODUCT_STORE_ORDERS: 'promotrack_np_store_orders',
-  TASKS: 'promotrack_tasks',
-  AUDIT_LOGS: 'promotrack_audit_logs',
-  OFFLINE_DRAFTS: 'promotrack_offline_drafts',
+// A separate namespace activates only the supplied workbook. Old browser data
+// remains recoverable under its old keys and is never mixed into this dataset.
+const datasetKey = (name: string) => `promotrack_outlet_${DATASET_VERSION}_${name}`;
+export const STORAGE_KEYS = {
+  CURRENT_USER: datasetKey('current_user'),
+  USERS: datasetKey('users'),
+  CHANNELS: datasetKey('channels'),
+  SUB_CHANNELS: datasetKey('sub_channels'),
+  STORES: datasetKey('stores'),
+  PROMOTIONS: datasetKey('promotions'),
+  PROMOTION_STORES: datasetKey('promo_stores'),
+  NEW_PRODUCTS: datasetKey('new_products'),
+  NEW_PRODUCT_STORE_ORDERS: datasetKey('np_store_orders'),
+  TASKS: datasetKey('tasks'),
+  AUDIT_LOGS: datasetKey('audit_logs'),
+  OFFLINE_DRAFTS: datasetKey('offline_drafts'),
   LANGUAGE: 'promotrack_lang',
   THEME: 'promotrack_theme',
   THEME_COLOR: 'promotrack_theme_color',
@@ -181,7 +185,12 @@ class DataService {
   }
 
   public getSalesReps(): UserProfile[] {
-    return this.getAllUsers().filter((u) => u.role === 'sales');
+    return this.getAllUsers().filter((u) => u.role === 'sales' || u.mdeId);
+  }
+
+  public getMainChannelName(channelName: string) {
+    const channel = this.getChannels().find((item) => item.name === channelName);
+    return OUTLET_DATASET.mainChannels.find((item) => item.id === channel?.mainChannelId)?.name || '';
   }
 
   public logout() {
@@ -197,7 +206,7 @@ class DataService {
     const allUsers = this.getAllUsers();
     const cleanEmail = userData.email.trim().toLowerCase();
 
-    if (allUsers.some((u) => u.email.toLowerCase() === cleanEmail)) {
+    if (cleanEmail && allUsers.some((u) => u.email.toLowerCase() === cleanEmail)) {
       return { success: false, error: 'Email already exists. Please choose a unique email address.' };
     }
 
@@ -205,7 +214,7 @@ class DataService {
       ...userData,
       email: cleanEmail,
       id: `u-${userData.role}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
-      avatarUrl: userData.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+      avatarUrl: userData.avatarUrl || ''
     };
 
     allUsers.push(newUser);
@@ -379,6 +388,17 @@ class DataService {
     }
   }
 
+  private withOutletMetadata(store: Store): Store {
+    const rep = this.getAllUsers().find((user) => user.id === store.assignedSalesUser);
+    const channel = this.getChannels().find((item) => item.name === store.channel);
+    const subChannel = this.getSubChannels().find((item) => item.channelId === channel?.id && item.name === store.subChannel);
+    return {
+      ...store, mdeName: rep?.mdeId ? rep.fullName : '', mdeId: rep?.mdeId,
+      channelId: channel?.id, subChannelId: subChannel?.id, mainChannelId: channel?.mainChannelId,
+      mainChannel: this.getMainChannelName(store.channel) || store.mainChannel || ''
+    };
+  }
+
   public addStore(storeData: Omit<Store, 'id' | 'createdAt' | 'updatedAt'>): { success: boolean; error?: string; store?: Store } {
     const allStores = this.getAllStoresUnfiltered();
     const cleanCode = storeData.storeCode.trim().toUpperCase();
@@ -388,13 +408,13 @@ class DataService {
       return { success: false, error: `Store Code "${cleanCode}" already exists. Please choose a unique code.` };
     }
 
-    const newStore: Store = {
+    const newStore: Store = this.withOutletMetadata({
       ...storeData,
       storeCode: cleanCode,
-      id: `str-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
-    };
+    });
 
     allStores.unshift(newStore);
     localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify(allStores));
@@ -420,11 +440,11 @@ class DataService {
       updates.storeCode = cleanCode;
     }
 
-    allStores[index] = {
+    allStores[index] = this.withOutletMetadata({
       ...allStores[index],
       ...updates,
       updatedAt: new Date().toISOString()
-    };
+    });
 
     localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify(allStores));
     this.recordDraft('store', 'update', allStores[index]);
@@ -1183,22 +1203,30 @@ class DataService {
     const rawHeaders: string[] = (rawJson[0] as string[]).map((h) => String(h || '').trim());
     const dataRows = rawJson.slice(1);
 
-    // Map column indices
-    const findIndex = (candidates: string[]) =>
-      rawHeaders.findIndex((h) => candidates.some((c) => h.toLowerCase().includes(c.toLowerCase())));
-
-    const codeIdx = findIndex(['code', 'store code', 'store_code']);
-    const nameIdx = findIndex(['name', 'store name', 'store_name']);
-    const channelIdx = findIndex(['channel', 'trade channel']);
-    const subChannelIdx = findIndex(['sub channel', 'sub_channel', 'subchannel']);
-    const salesIdx = findIndex(['sales', 'assigned sales', 'rep', 'representative']);
+    // Match exact normalized aliases: "MDE NAME" must never become the outlet name,
+    // and "MIAN CHANEL" must never become the secondary channel.
+    const normalize = (value: string) => value.toLowerCase().replace(/[\s_-]+/g, '');
+    const findIndex = (candidates: string[]) => rawHeaders.findIndex((header) => candidates.some((candidate) => normalize(header) === normalize(candidate)));
+    const codeIdx = findIndex(['code', 'store code', 'outlet code']);
+    const nameIdx = findIndex(['name', 'store name', 'outlet']);
+    const channelIdx = findIndex(['channel', 'trade channel', 'chenel']);
+    const subChannelIdx = findIndex(['sub channel', 'sub-chanel']);
+    const salesIdx = findIndex(['sales', 'assigned sales', 'rep', 'representative', 'mde name']);
+    const mainIdx = findIndex(['main channel', 'mian chanel']);
+    const villageIdx = findIndex(['village', 'villag']);
+    const districtIdx = findIndex(['district']);
+    const provinceIdx = findIndex(['province', 'city / province']);
+    const outletFormat = rawHeaders.some((header) => normalize(header) === 'outletcode');
 
     const errors: string[] = [];
     const warnings: string[] = [];
 
     if (codeIdx === -1) errors.push('Missing required column: "Store Code"');
     if (nameIdx === -1) errors.push('Missing required column: "Store Name"');
-    if (channelIdx === -1) warnings.push('Column "Channel" not detected, will use default "General Trade"');
+    if (channelIdx === -1) warnings.push('Channel is missing; no channel will be invented.');
+    if (outletFormat && [channelIdx, subChannelIdx, salesIdx, mainIdx, villageIdx, districtIdx, provinceIdx].some((index) => index === -1)) {
+      errors.push('Outlet imports require all nine columns from outlet.xlsx.');
+    }
 
     if (errors.length > 0) {
       return { rows: [], headers: rawHeaders, errors, warnings };
@@ -1213,17 +1241,20 @@ class DataService {
     dataRows.forEach((row, rowIndex) => {
       if (!row || row.length === 0) return;
 
-      const rawCode = String(row[codeIdx] || '').trim();
-      const rawName = String(row[nameIdx] || '').trim();
-      const rawChannel = channelIdx !== -1 ? String(row[channelIdx] || '').trim() : 'General Trade';
-      const rawSubChannel = subChannelIdx !== -1 ? String(row[subChannelIdx] || '').trim() : 'Medium Grocery';
-      const rawSales = salesIdx !== -1 ? String(row[salesIdx] || '').trim() : '';
+      const cell = (index: number) => index !== -1 ? String(row[index] ?? '').trim() : '';
+      const rawCode = cell(codeIdx);
+      const rawName = cell(nameIdx);
+      const rawChannel = cell(channelIdx);
+      const rawSubChannel = cell(subChannelIdx);
+      const rawSales = cell(salesIdx);
 
       if (!rawCode && !rawName) return; // skip blank trailing row
 
       const rowErrors: string[] = [];
       if (!rawCode) rowErrors.push('Store Code is required');
       if (!rawName) rowErrors.push('Store Name is required');
+      if (outletFormat && [rawChannel, rawSubChannel, rawSales, cell(mainIdx), cell(villageIdx), cell(districtIdx), cell(provinceIdx)].some((value) => !value)) rowErrors.push('All nine outlet values are required.');
+      if (rawSales && !this.getSalesReps().some((rep) => rep.fullName.toLowerCase() === rawSales.toLowerCase() || (rep.email && rep.email.toLowerCase() === rawSales.toLowerCase()))) rowErrors.push(`Unknown MDE: ${rawSales}`);
 
       const upperCode = rawCode.toUpperCase();
       let isDuplicate = false;
@@ -1242,9 +1273,13 @@ class DataService {
       parsedRows.push({
         storeCode: rawCode,
         storeName: rawName,
-        channel: rawChannel || 'General Trade',
-        subChannel: rawSubChannel || 'Medium Grocery',
+        channel: rawChannel,
+        subChannel: rawSubChannel,
         assignedSales: rawSales,
+        mainChannel: mainIdx !== -1 ? cell(mainIdx) : undefined,
+        village: villageIdx !== -1 ? cell(villageIdx) : undefined,
+        district: districtIdx !== -1 ? cell(districtIdx) : undefined,
+        province: provinceIdx !== -1 ? cell(provinceIdx) : undefined,
         isValid: rowErrors.length === 0,
         errors: rowErrors,
         isDuplicate
@@ -1275,7 +1310,6 @@ class DataService {
 
     const allStores = this.getAllStoresUnfiltered();
     const salesReps = this.getSalesReps();
-    const defaultSalesUser = salesReps[0]?.id || currentUser.id;
 
     let importedCount = 0;
     let updatedCount = 0;
@@ -1290,45 +1324,50 @@ class DataService {
       const cleanCode = row.storeCode.trim().toUpperCase();
       const existingIndex = allStores.findIndex((s) => s.storeCode.toUpperCase() === cleanCode);
 
-      // Resolve sales rep ID from text name
-      let salesUserId = defaultSalesUser;
-      if (row.assignedSales) {
-        const matchedRep = salesReps.find(
-          (r) =>
-            r.fullName.toLowerCase().includes(row.assignedSales.toLowerCase()) ||
-            r.email.toLowerCase().includes(row.assignedSales.toLowerCase())
-        );
-        if (matchedRep) salesUserId = matchedRep.id;
-      }
+      const matchedRep = row.assignedSales ? salesReps.find((rep) => rep.fullName.toLowerCase() === row.assignedSales.toLowerCase() || (rep.email && rep.email.toLowerCase() === row.assignedSales.toLowerCase())) : undefined;
+      if (row.assignedSales && !matchedRep) { skippedCount++; return; }
+      const previous = allStores[existingIndex];
+      const salesUserId = matchedRep?.id || previous?.assignedSalesUser || '';
+      const metadata = {
+        mdeId: matchedRep?.mdeId || previous?.mdeId,
+        mdeName: matchedRep?.fullName || previous?.mdeName || '',
+        mainChannel: row.mainChannel ?? previous?.mainChannel ?? this.getMainChannelName(row.channel),
+        village: row.village ?? previous?.village ?? '',
+        district: row.district ?? previous?.district ?? '',
+        province: row.province ?? previous?.province ?? '',
+        city: row.province ?? previous?.city ?? ''
+      };
 
       if (existingIndex !== -1) {
         if (duplicateAction === 'skip') {
           skippedCount++;
         } else {
           // Update existing
-          allStores[existingIndex] = {
+          allStores[existingIndex] = this.withOutletMetadata({
             ...allStores[existingIndex],
+            ...metadata,
             storeName: row.storeName || allStores[existingIndex].storeName,
             channel: row.channel || allStores[existingIndex].channel,
             subChannel: row.subChannel || allStores[existingIndex].subChannel,
             assignedSalesUser: salesUserId,
             updatedAt: new Date().toISOString()
-          };
+          });
           updatedCount++;
         }
       } else {
         // Insert new store
-        allStores.push({
-          id: `str-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+        allStores.push(this.withOutletMetadata({
+          ...metadata,
+          id: crypto.randomUUID(),
           storeCode: cleanCode,
           storeName: row.storeName,
-          channel: row.channel || 'General Trade',
-          subChannel: row.subChannel || 'Medium Grocery',
+          channel: row.channel,
+          subChannel: row.subChannel,
           assignedSalesUser: salesUserId,
           isActive: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
-        });
+        }));
         importedCount++;
       }
     });
@@ -1344,15 +1383,15 @@ class DataService {
     const salesMap = new Map(this.getAllUsers().map((u) => [u.id, u.fullName]));
 
     const data = list.map((s) => ({
-      'Store Code': s.storeCode,
-      'Store Name': s.storeName,
-      'Channel': s.channel,
-      'Sub Channel': s.subChannel,
-      'Assigned Sales': salesMap.get(s.assignedSalesUser) || 'Unassigned',
-      'City / Province': s.city || 'Vientiane',
-      'Phone': s.phone || '',
-      'Status': s.isActive ? 'Active' : 'Inactive',
-      'Created Date': s.createdAt.substring(0, 10)
+      'MDE NAME': salesMap.get(s.assignedSalesUser) || s.mdeName || '',
+      'OUTLET CODE': s.storeCode,
+      'OUTLET': s.storeName,
+      'MIAN CHANEL': s.mainChannel || this.getMainChannelName(s.channel),
+      'CHENEL': s.channel,
+      'SUB-CHANEL': s.subChannel,
+      'VILLAG': s.village || '',
+      'DISTRICT': s.district || '',
+      'PROVINCE': s.province || s.city || ''
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);

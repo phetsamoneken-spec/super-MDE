@@ -1,3 +1,4 @@
+import { avatarFor } from '../utils/avatar';
 import React, { useState, useMemo, useRef } from 'react';
 import {
   Users,
@@ -34,16 +35,7 @@ interface UserManagementViewProps {
   onOpenSwitchUser: () => void;
 }
 
-const PRESET_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
-];
+const PRESET_AVATARS = [avatarFor()];
 
 export const UserManagementView: React.FC<UserManagementViewProps> = ({
   currentUser,
@@ -197,10 +189,6 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     e.preventDefault();
     if (!formData.fullName.trim()) {
       setFormError('Full name is required.');
-      return;
-    }
-    if (!formData.email.trim()) {
-      setFormError('Email address is required.');
       return;
     }
 
@@ -382,7 +370,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <img
-                    src={user.avatarUrl || PRESET_AVATARS[0]}
+                    src={avatarFor(user)}
                     alt={user.fullName}
                     className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[var(--color-border)] shrink-0 bg-white"
                   />
@@ -517,7 +505,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
 
                   <div className="flex items-center gap-3 mb-2.5">
                     <img
-                      src={formData.avatarUrl || PRESET_AVATARS[0]}
+                      src={avatarFor(formData)}
                       alt="Avatar Preview"
                       className="w-14 h-14 rounded-2xl object-cover ring-2 ring-[var(--color-primary)] bg-white shrink-0"
                     />
@@ -597,11 +585,10 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 {/* Email */}
                 <div>
                   <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1">
-                    {language === 'lo' ? 'ອີເມວ *' : 'Email Address *'}
+                    {language === 'lo' ? 'ອີເມວ (ຖ້າມີ)' : 'Email Address (optional)'}
                   </label>
                   <input
                     type="email"
-                    required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="somphone@promotrack.la"

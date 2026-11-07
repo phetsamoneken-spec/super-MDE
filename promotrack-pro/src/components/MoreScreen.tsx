@@ -1,3 +1,4 @@
+import { avatarFor } from '../utils/avatar';
 import React, { useState } from 'react';
 import {
   User,
@@ -88,7 +89,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
       >
         <div className="flex items-center gap-3">
           <img
-            src={currentUser.avatarUrl}
+            src={avatarFor(currentUser)}
             alt={currentUser.fullName}
             className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[var(--color-primary)]"
           />

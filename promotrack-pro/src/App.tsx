@@ -189,7 +189,7 @@ export default function App() {
             <div className="mb-4 p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center justify-between shadow-xs">
               <div className="flex items-center gap-2">
                 <WifiOff className="w-4 h-4 animate-pulse text-amber-600" />
-                <span>Offline Mode: You can continue drafting updates and tasks. Changes are safely saved locally and will synchronize.</span>
+                <span>Offline Mode: You can continue drafting updates and tasks. Changes are saved in this browser.</span>
               </div>
             </div>
           )}

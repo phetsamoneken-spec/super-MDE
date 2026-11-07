@@ -1,108 +1,44 @@
-# Promotion Tracking & To-Do List PWA
+# PromoTrack
 
-A mobile-first, installable Progressive Web App (PWA) built for sales and marketing teams to track retail store participation in promotional campaigns, identify ordering statuses, automate follow-up workflows, and maintain an audit trail.
+React, TypeScript and Vite PWA for outlet management, promotion/order tracking, new product launches, follow-up tasks, and Excel import/export, with Lao/English UI and a self-hosted Noto Sans Lao font.
 
----
+## Supplied business data
 
-## 1. System Architecture & Tech Stack
+`data/outlet.xlsx` is the only initial business-data source. It contains 1,178 unique outlet codes, seven MDEs, one main channel, two channels, 15 Sub-channels, 114 villages, six districts, and one province. The original Lao names and all nine source columns are preserved. The two repeated outlet names remain separate outlets because their codes differ.
 
-- **Frontend**: React 19, TypeScript, Tailwind CSS, Lucide Icons, Canvas Confetti.
-- **PWA**: Web App Manifest (`/public/manifest.webmanifest`), Service Worker (`/public/sw.js`), 192×192 & 512×512 icons, iOS Add to Home Screen guide, standalone mode detection, offline banner, and draft queue.
-- **Data & Excel Processing**: SheetJS (`xlsx`) for parsing, validating, previewing, and batch-importing/exporting `.xlsx`, `.xls`, and `.csv` files.
-- **Backend Architecture**: Supabase PostgreSQL, Row Level Security (RLS), Supabase Storage policies, and audit logging.
-- **Bilingual Typography**: Native Lao (ພາສາລາວ - Noto Sans Lao) and English (Inter) language switcher with 100% dictionary coverage.
+There are no seeded promotions, products, orders, tasks, fake phone numbers, email addresses, or people photos. A separate local **Admin** management persona is retained as requested; it is not assigned to any MDE. Each MDE persona sees its own workbook-assigned outlets.
 
----
+The owner authorized publication of this dataset in the public static app. These local personas are not secure authentication. The frontend still stores edits in the current browser and does not synchronize with a live Supabase project. See [Supabase schema and import](supabase/README.md) for the prepared schema, exact column mapping, SQL import, real Auth account linkage and database access policies.
 
-## 2. User Roles & Security Matrix
+## Development
 
-| Capability | Admin Persona | Sales Rep Persona |
-| :--- | :---: | :---: |
-| View All Stores & Outlets | Yes | No (Only assigned stores) |
-| Add, Edit, Delete Stores | Yes | No |
-| Batch Excel Import / Export | Yes | Export authorized records only |
-| Create & Archive Promotions | Yes | View active promotions only |
-| Upload Promotion Posters (Max 5MB) | Yes | Read-only |
-| Assign Stores to Promotions | Yes | No |
-| Update Order Status (Amount, Date) | Yes | Yes (Only for assigned stores) |
-| Follow-up Date & Task Automation | Yes | Yes (Only for assigned stores) |
-| View Audit History Log | Yes | Yes (Scoped to assigned stores) |
-| Access Full Leadership Dashboard | Yes | Scoped to individual performance |
+Use the existing checkout; cloud tasks are isolated, so do not create a Git worktree unless explicitly requested.
 
----
-
-## 3. Database Migrations (Prepared for Review)
-
-All migrations and security policies have been drafted in the `/supabase/migrations/` directory for technical review prior to execution:
-
-1. **`supabase/migrations/20251105000000_initial_schema.sql`**
-   - Tables: `profiles`, `channels`, `sub_channels`, `stores`, `promotions`, `promotion_stores`, `follow_up_tasks`, `order_status_history`.
-   - Constraints: Unique `store_code`, `promotion_stores(store_id, promotion_id)` uniqueness, foreign keys with appropriate cascade/set null rules, UUID keys.
-2. **`supabase/migrations/20251105000001_rls_policies.sql`**
-   - Security helper functions: `public.is_admin()` and `public.is_store_assigned_to_me()`.
-   - Strict policies preventing sales reps from changing roles or reassigning stores to themselves.
-   - Fine-grained UPDATE policies on `promotion_stores`.
-3. **`supabase/migrations/20251105000002_storage_policies.sql`**
-   - Storage bucket: `promotion-images` (5MB limit, `image/jpeg`, `image/png`, `image/webp`).
-   - Admin-only write/replace/delete, authenticated read.
-4. **`supabase/seed.sql`**
-   - Initial channels (Modern Trade, General Trade, CVS, Wholesale, HORECA), demo users, and seed records.
-
----
-
-## 4. Excel Import / Export Specification
-
-### Required Import Columns
-```text
-Store Code | Store Name | Channel | Sub Channel | Assigned Sales
+```sh
+cd /workspace/bundo/promotrack-pro
+export PATH="/workspace/.tools/bun-1.4.4/node_modules/.bin:$PATH"
+bun install --frozen-lockfile
+npm run data:generate
+npm test
+npm run lint
+npm run dev -- --strictPort
 ```
 
-### Import Workflow
-1. Select `.xlsx`, `.xls`, or `.csv` file (or drag & drop).
-2. SheetJS parses workbook headers and records.
-3. Live preview shows valid rows, error highlights, and duplicate detections.
-4. Duplicate Resolution: Choose **Skip existing stores** or **Update existing stores**.
-5. Batch execution applies records with real-time summary.
-6. Sample template available at `/public/templates/store_import_template.xlsx`.
+The deployment workflow uses Node 24 and Bun 1.4.4, runs tests and TypeScript, builds with `npm run build -- --base=/bundo/`, and deploys to GitHub Pages. Build generates the reviewed dataset and SQL from the supplied workbook; it does not execute SQL.
 
----
+## Existing features
 
-## 5. Local Demo Personas
+- Store directory, search, channel/Sub-channel/MDE filters, pagination, and outlet details containing all supplied fields.
+- Admin Sub-channel creation/deletion with duplicate checks and protection for referenced categories.
+- Admin new-product creation/editing/deletion, targeting, store assignment, samples and order tracking.
+- Promotion management, order status changes, audit history, follow-up tasks and Excel exports.
+- Original nine-column workbook import, validation, duplicate skip/update, blank template download and matching nine-column outlet export.
+- Theme, branding/logo upload, Lao/English, PWA install guidance and offline shell/font caching.
 
-Use the **Switch Demo User** button in the header or sidebar to test roles:
+Each workbook fingerprint has its own browser storage namespace. This activates only the supplied data and excludes the former demo dataset without deleting the previous browser keys. Theme, language and branding preferences keep their existing keys. Further user edits remain on refresh; code rebuilds do not reset the same dataset.
 
-1. **Sengdavanh Phommasone (Admin)**
-   - Role: `admin`
-   - Access: All 15+ stores, all promotions, full Excel import/export center.
-2. **Khamphanh Keomany (Sales Rep - Vientiane)**
-   - Role: `sales`
-   - Access: Scoped strictly to Vientiane outlets (Modern Trade, CVS, Wholesale).
-3. **Soulinthone Vongsa (Sales Rep - Luang Prabang)**
-   - Role: `sales`
-   - Access: Scoped to northern outlets.
-4. **Bounmy Sisoulath (Sales Rep - Pakse)**
-   - Role: `sales`
-   - Access: Scoped to southern outlets.
+## Database status
 
----
+`supabase/migrations/20261107000000_outlet_workbook.sql` extends the schema with MDEs, main channels, explicit location fields, source identifiers and an RLS-preserving nine-column view. `supabase/seed.sql` upserts only workbook records. `supabase/outlet-fresh-setup.sql` is a combined script for a verified fresh project.
 
-## 6. Local Test Results & Verification
-
-- [x] **PWA Compliance**: Manifest valid, Service Worker active, 192x192 and 512x512 icons present, iOS Add to Home Screen instructions modal verified.
-- [x] **Store Management**: Add store validation, duplicate store code detection, filter by channel/sales rep, pagination, delete safety check.
-- [x] **Excel Processing**: SheetJS parses test `.xlsx` workbooks, detects duplicate codes, handles skip/update toggles, exports formatted `.xlsx` files with customized column widths.
-- [x] **Promotion Workflow**: Create promotion, 5MB file upload validation (JPEG/PNG/WebP), store-promotion assignment, order conversion rate calculation `(Ordered / Participating * 100)`.
-- [x] **Order Tracking & Audit**: Status transitions (Not Ordered, Follow-up Required, Ordered, Cancelled), automatic To-Do task generation, timestamped audit log.
-- [x] **To-Do List**: Overdue filter, Due Today filter, priority tags, one-click completion with celebration confetti.
-- [x] **Bilingual Support**: Instant toggle between English and Lao (ພາສາລາວ) with Lao Unicode font rendering.
-- [x] **Compilation**: `npm run build` and `tsc --noEmit` build with 0 errors.
-
----
-
-## 7. Pre-Deployment Checklist
-
-- [ ] Review `/supabase/migrations/` SQL files with database architect.
-- [ ] Connect production Supabase credentials via `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
-- [ ] Apply migrations via Supabase CLI: `supabase db push`.
-- [ ] Verify Row Level Security policies via Supabase test suite.
-- [ ] Set custom domain and HTTPS for PWA installation in production.
+Schema and seed are tested in an isolated PostgreSQL engine. Generating or validating SQL does not apply it to a remote Supabase project. Existing remote records must be inspected before reconciliation; the scripts do not blindly delete unrelated data or auth accounts.

@@ -1,3 +1,4 @@
+import { avatarFor } from '../utils/avatar';
 import React, { useState } from 'react';
 import {
   Menu,
@@ -197,7 +198,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Switch demo role"
             >
               <img
-                src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                src={avatarFor(currentUser)}
                 alt={currentUser.fullName}
                 className="w-7 h-7 rounded-full object-cover ring-2 ring-emerald-500/50"
               />

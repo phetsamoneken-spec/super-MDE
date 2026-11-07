@@ -89,7 +89,7 @@ export const PromotionsView: React.FC<PromotionsViewProps> = ({
       startDate: new Date().toISOString().substring(0, 10),
       endDate: new Date(Date.now() + 30 * 86400000).toISOString().substring(0, 10),
       status: 'Active',
-      imageUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop&q=80',
+      imageUrl: '',
       targetSubChannels: []
     });
     setImagePreview('');
@@ -178,7 +178,7 @@ export const PromotionsView: React.FC<PromotionsViewProps> = ({
         startDate: formData.startDate,
         endDate: formData.endDate,
         status: formData.status,
-        imageUrl: formData.imageUrl || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop&q=80',
+        imageUrl: formData.imageUrl,
         targetSubChannels: formData.targetSubChannels
       });
       if (!res.success) {
@@ -334,7 +334,7 @@ export const PromotionsView: React.FC<PromotionsViewProps> = ({
               {/* Promotion Image / Header Banner */}
               <div className="relative h-36 sm:h-40 bg-slate-900 overflow-hidden">
                 <img
-                  src={promo.imageUrl || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop&q=80'}
+                  src={promo.imageUrl || `${import.meta.env.BASE_URL}icons/image-placeholder.svg`}
                   alt={promo.promotionName}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
                 />

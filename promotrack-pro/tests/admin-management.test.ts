@@ -23,7 +23,8 @@ before(async () => {
 });
 beforeEach(() => { storage.clear(); seed.forEach(([key, value]) => storage.setItem(key, value)); });
 
-const addChannel = () => dataService.addSubChannel({ name: 'Audit outlets', channelId: 'ch-1' });
+const firstChannel = () => dataService.getChannels()[0].id;
+const addChannel = () => dataService.addSubChannel({ name: 'Audit outlets', channelId: firstChannel() });
 const addProduct = (targetSubChannels: string[] = []) => dataService.createNewProduct({
   productName: 'Audit launch', sku: 'AUDIT-1', category: 'Beverages', launchDate: '2026-11-07',
   packSize: '24 units', unitPrice: 10000, targetDistributionRate: 80, targetUnitsPerStore: 24,
@@ -39,16 +40,17 @@ test('admin can add and delete a persisted unused Sub-channel', () => {
 });
 
 test('Sub-channel creation validates names, parents, and duplicates', () => {
-  assert.equal(dataService.addSubChannel({ name: '   ', channelId: 'ch-1' }).error, 'name_required');
+  assert.equal(dataService.addSubChannel({ name: '   ', channelId: firstChannel() }).error, 'name_required');
   assert.equal(dataService.addSubChannel({ name: 'Test', channelId: 'missing' }).error, 'channel_required');
   assert.equal(addChannel().success, true);
-  assert.equal(dataService.addSubChannel({ name: ' audit OUTLETS ', channelId: 'ch-1' }).error, 'duplicate_name');
+  assert.equal(dataService.addSubChannel({ name: ' audit OUTLETS ', channelId: firstChannel() }).error, 'duplicate_name');
 });
 
 test('used Sub-channels cannot be deleted and stores are preserved', () => {
   const before = dataService.getAllStoresUnfiltered();
-  assert(dataService.getSubChannelUsage('sub-2').stores > 0);
-  assert.equal(dataService.deleteSubChannel('sub-2').error, 'in_use');
+  const usedId = dataService.getSubChannels()[0].id;
+  assert(dataService.getSubChannelUsage(usedId).stores > 0);
+  assert.equal(dataService.deleteSubChannel(usedId).error, 'in_use');
   assert.deepEqual(dataService.getAllStoresUnfiltered(), before);
   assert.equal(dataService.deleteSubChannel('missing').error, 'not_found');
 });
@@ -80,8 +82,8 @@ test('sales cannot add or delete Sub-channels or new products through the servic
   dataService.setCurrentUser(dataService.getSalesReps()[0]);
   const snapshot = [...storage.data];
   assert.equal(addChannel().error, 'admin_only');
-  assert.equal(dataService.deleteSubChannel('sub-1').error, 'admin_only');
+  assert.equal(dataService.deleteSubChannel(dataService.getSubChannels()[0].id).error, 'admin_only');
   assert.equal(addProduct().success, false);
-  assert.equal(dataService.deleteNewProduct(dataService.getAllNewProductsUnfiltered()[0].id).success, false);
+  assert.equal(dataService.deleteNewProduct('any-product').success, false);
   assert.deepEqual([...storage.data], snapshot);
 });
