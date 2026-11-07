@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: 'Inter', 'Noto Sans Lao', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 :root {
   --color-primary: #248A60;
   --color-primary-dark: #176B4A;
@@ -33,7 +37,7 @@
   body {
     background-color: var(--color-bg);
     color: var(--color-text-primary);
-    font-family: 'Inter', 'Noto Sans Lao', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     -webkit-user-select: none;
