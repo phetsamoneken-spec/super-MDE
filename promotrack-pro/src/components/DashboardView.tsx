@@ -1,5 +1,5 @@
 import { CampaignImage } from './CampaignImage';
-import { FieldIllustration } from './FieldIllustration';
+import { DashboardCampaignCarousel } from './DashboardCampaignCarousel';
 import { avatarFor } from '../utils/avatar';
 import React, { useState, useMemo } from 'react';
 import {
@@ -242,11 +242,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      <section className="dashboard-hero">
-        <div className="dashboard-hero-copy"><div className="dashboard-workspace-pill"><Sparkles size={12}/>{currentUser.role==='admin' ? (language==='lo'?'ພື້ນທີ່ຈັດການຂອງທ່ານ':'YOUR TEAM WORKSPACE') : (language==='lo'?'ພື້ນທີ່ການຂາຍຂອງທ່ານ':'YOUR SALES WORKSPACE')}</div><p className="eyebrow">{language === 'lo' ? 'ພາບລວມປະຈຳວັນ' : 'YOUR DAILY OVERVIEW'}</p>
-        <h2>{language === 'lo' ? 'ພ້ອມສຳລັບ' : 'A fresh day.'}<br/>{language === 'lo' ? 'ທຸກໂອກາດ.' : 'Make it count.'}</h2>
+      <section className="dashboard-hero dashboard-hero--campaigns">
+        <div className="dashboard-hero-copy"><div className="dashboard-workspace-pill"><Sparkles size={12}/>{currentUser.role==='admin' ? (language==='lo'?'ພື້ນທີ່ຈັດການຂອງທ່ານ':'YOUR TEAM WORKSPACE') : (language==='lo'?'ພື້ນທີ່ການຂາຍຂອງທ່ານ':'YOUR SALES WORKSPACE')}</div><p className="eyebrow">{language === 'lo' ? 'ຮູບແນະນຳສຳລັບທ່ານ' : 'IN THE SPOTLIGHT'}</p>
+        <h2>{language === 'lo' ? 'ສິນຄ້າໃໝ່' : 'New products.'}<br/>{' '}{language === 'lo' ? 'ແລະ ໂປຣໂມຊັ່ນ' : 'Fresh promotions.'}</h2>
         <div className="dashboard-hero-actions"><button onClick={() => handleCardClick('stores')} className="hero-cta">{language === 'lo' ? 'ເບິ່ງຮ້ານຄ້າ' : 'Explore outlets'}<ArrowRight size={15}/></button><button onClick={()=>handleCardClick('tasks')} className="hero-today"><Calendar size={14}/>{todayFollowUps.length} {language==='lo'?'ວຽກມື້ນີ້':'due today'}</button></div></div>
-        <FieldIllustration />
+        <DashboardCampaignCarousel products={newProducts} promotions={promotions} language={language} onOpenProduct={onOpenNewProductOrders} onOpenPromotion={setSelectedPromoForDetail}/>
       </section>
       {/* 2. Compact Promotion Selector */}
       <div className="dashboard-section-heading"><div><p className="dashboard-kicker">{language==='lo'?'ຂໍ້ມູນຂອງທ່ານ':'AT A GLANCE'}</p><h2>{language==='lo'?'ພາບລວມໂປຣໂມຊັ່ນ':'Promotion overview'}</h2></div></div>

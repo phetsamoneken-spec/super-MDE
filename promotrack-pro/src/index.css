@@ -314,3 +314,37 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .campaign-image-full > .campaign-image-full-content { display: block; width: 100%; height: auto; max-height: 28rem; object-fit: contain; object-position: center; }
 .campaign-image-full > [role="img"] { min-height: 160px; }
 .campaign-modal-image > .campaign-image-full-content { max-height: 40vh; }
+
+/* Real campaign artwork replaces the decorative dashboard storefront. */
+.colorful-dashboard .dashboard-hero--campaigns { gap: 28px; align-items: center; }
+.dashboard-hero--campaigns .dashboard-hero-copy { flex: .9; }
+.hero-campaign-carousel { flex: 1.1; min-width: 0; width: 52%; border: 1px solid #ffffff30; background: #ffffff10; border-radius: 24px; padding: 10px; }
+.hero-campaign-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; border-radius: 16px; background: #f9faf7; }
+.hero-campaign-track::-webkit-scrollbar { display: none; }
+.hero-campaign-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; padding: 12px; }
+.hero-campaign-photo { width: 100%; height: 300px; background: transparent; }
+.hero-campaign-photo img { object-fit: contain; object-position: center; user-select: none; -webkit-user-drag: none; }
+.hero-campaign-caption { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 62px; padding: 12px 4px 8px; text-align: left; color: white; }
+.hero-campaign-caption > svg { flex-shrink: 0; }
+.hero-campaign-kind { display: block; font-size: 9px; font-weight: 700; color: #e1f49d; letter-spacing: .06em; line-height: 1.8; }
+.hero-campaign-title { display: block; font-size: 14px; font-weight: 700; line-height: 1.6; overflow-wrap: anywhere; }
+.hero-campaign-controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.hero-carousel-arrow { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid #ffffff40; border-radius: 14px; background: #ffffff14; color: white; }
+.hero-carousel-arrow:hover, .hero-campaign-caption:hover { background: #ffffff10; }
+.hero-campaign-count { text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; line-height: 1.5; }
+.hero-campaign-count > span { display: block; font-size: 9px; color: #ded6f6; }
+.hero-campaign-dots { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; margin-top: 3px; }
+.hero-campaign-dots button { display: grid; place-items: center; min-width: 30px; min-height: 30px; border-radius: 8px; }
+.hero-campaign-dots button > span { width: 6px; height: 6px; border-radius: 8px; background: #ffffff50; }
+.hero-campaign-dots button[aria-pressed=true] > span { width: 18px; background: #e1f49d; }
+.hero-campaign-empty { min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; font-size: 12px; color: #e7defb; }
+@media (max-width: 767px) {
+  .colorful-dashboard .dashboard-hero--campaigns { flex-direction: column; gap: 20px; padding: 22px; }
+  .dashboard-hero--campaigns .dashboard-hero-copy { width: 100%; }
+  .colorful-dashboard .dashboard-hero--campaigns h2 { font-size: 25px; line-height: 1.35; margin-bottom: 15px; }
+  .colorful-dashboard .dashboard-hero--campaigns h2 br { display: none; }
+  .hero-campaign-carousel { width: 100%; flex: auto; }
+  .hero-campaign-photo { height: 250px; }
+  .hero-campaign-title { font-size: 13px; }
+  .colorful-dashboard .dashboard-hero--campaigns .dashboard-hero-actions { margin-right: 0; }
+}
