@@ -742,6 +742,13 @@ BEGIN
   RETURN result;
 END; $$;
 
+
+-- 20261107030000_task_product_link.sql
+-- Keep NPD follow-ups linked to the product without guessing from task titles.
+
+ALTER TABLE public.follow_up_tasks ADD COLUMN product_id UUID REFERENCES public.new_products(id) ON DELETE SET NULL;
+CREATE INDEX follow_up_tasks_product_idx ON public.follow_up_tasks(product_id) WHERE product_id IS NOT NULL;
+
 -- Generated only from data/outlet.xlsx. SHA-256: da6cfd7b9fd9177cf1c4cf44fc5b5ca266d6bb6b7358c92292664655098646bc
 -- Apply schema migrations first. No auth accounts, products, orders, tasks, or promotions are fabricated.
 -- Intended for the project selected by its owner; does not delete unrelated existing records.

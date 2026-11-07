@@ -32,6 +32,8 @@ The deployment workflow uses Node 24 and Bun 1.4.4, runs tests and TypeScript, b
 - Admin Sub-channel creation/deletion with duplicate checks and protection for referenced categories.
 - Admin new-product creation/editing/deletion, targeting, store assignment, samples and order tracking.
 - Promotion management, order status changes, audit history, follow-up tasks and Excel exports.
+- Dashboard photo cards for saved promotions and new products, with clear empty/image fallback states.
+- To-do includes a new-product purchases view even when there are no tasks, plus outlet/product-specific order details and navigation from each task.
 - Original nine-column workbook import, validation, duplicate skip/update, blank template download and matching nine-column outlet export.
 - Theme, branding/logo upload, Lao/English, PWA install guidance and offline shell/font caching.
 

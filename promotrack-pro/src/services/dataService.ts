@@ -1079,6 +1079,7 @@ class DataService {
       const prodName = product ? product.productName : 'New Product';
 
       this.createTask({
+        productId: params.productId,
         storeId: params.storeId,
         assignedUser: store ? store.assignedSalesUser : currentUser.id,
         taskTitle: `Follow-up on New Product: ${prodName} at ${storeName}`,

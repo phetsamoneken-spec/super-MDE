@@ -66,3 +66,7 @@ Deleting an app profile removes its assignment, not the Supabase Auth account. U
 In User Management choose **Add user**, enter the colleague’s name and email, and select B1–B7. `admin_assign_user` checks Admin privileges on the server. For an already verified Auth account it creates/updates its Sales profile immediately. Otherwise it stores pending access in the Admin-only `app_user_assignments` table. The colleague registers using the same email, chooses their password, and confirms their email. `ensure_my_profile` consumes the matching pending assignment once. No invitation or email is sent by adding an assignment, and no password or Auth secret is handled by Admin’s browser.
 
 Pending assignments can be edited or deleted. Existing user profiles retain the Edit action for changing MDE. The database applies the assignment to every outlet read/write through existing RLS, not just frontend filtering. Admin accounts cannot be converted to Sales via this function. Sales and anonymous callers cannot create assignments or read their list. The migration is `20261107020000_user_assignments.sql`.
+
+## Product-linked follow-ups
+
+`20261107030000_task_product_link.sql` adds nullable `follow_up_tasks.product_id`. NPD auto-follow-ups and manually linked tasks persist the exact product ID. Deleting a product clears the link and preserves the task. Old tasks are not guessed or backfilled from their titles: general tasks show actual enrolments for their outlet, while linked tasks show only their exact product. Existing Admin/MDE RLS remains in force.

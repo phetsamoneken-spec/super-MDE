@@ -156,6 +156,12 @@ export default function App() {
     return due < Date.now();
   }).length;
 
+  const [selectedNewProduct, setSelectedNewProduct] = useState<{productId:string;storeId?:string}>();
+  useEffect(() => { if(currentTab !== 'newProducts') setSelectedNewProduct(undefined); }, [currentTab]);
+  const handleOpenNewProductOrders = (productId:string, storeId?:string) => {
+    setSelectedNewProduct({productId,storeId});setCurrentTab('newProducts');
+  };
+
   const handleOpenTrackingForPromo = (promoId: string) => {
     setSelectedPromotionForTracking(promoId);
     setCurrentTab('tracking');
@@ -254,6 +260,9 @@ export default function App() {
           {/* Tab 1: Dashboard */}
           {currentTab === 'dashboard' && (
             <DashboardView
+              newProducts={newProducts}
+              newProductOrders={newProductStoreOrders}
+              onOpenNewProductOrders={handleOpenNewProductOrders}
               stores={stores}
               promotions={promotions}
               promoStores={promoStores}
@@ -299,6 +308,8 @@ export default function App() {
           {/* Tab: New Product Launches & Order Tracking */}
           {currentTab === 'newProducts' && (
             <NewProductsView
+              initialProductId={selectedNewProduct?.productId}
+              initialStoreId={selectedNewProduct?.storeId}
               onManageSubChannels={() => setIsSubChannelManagerOpen(true)}
               newProducts={newProducts}
               storeOrders={newProductStoreOrders}
@@ -328,6 +339,9 @@ export default function App() {
           {/* Tab 5: To-Do List */}
           {currentTab === 'tasks' && (
             <TodoListView
+              newProducts={newProducts}
+              newProductOrders={newProductStoreOrders}
+              onOpenNewProductOrders={handleOpenNewProductOrders}
               tasks={tasks}
               stores={stores}
               promotions={promotions}

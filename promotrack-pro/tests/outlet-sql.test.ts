@@ -46,10 +46,10 @@ const launchId=crypto.randomUUID(), orderId=crypto.randomUUID(), taskId=crypto.r
 const ownOutlet=data.outlets.find(o=>o.mdeId===data.mdes[0].id)!;
 await apply([{table:'new_products',operation:'upsert',rows:[{id:launchId,product_name:'Test launch',sku:'test',category:'test',launch_date:'2026-11-07',pack_size:'1',unit_price:1,target_distribution_rate:50,target_units_per_store:1,status:'Active',created_by:ids[0]}]},
 {table:'new_product_store_orders',operation:'upsert',rows:[{id:orderId,product_id:launchId,store_id:ownOutlet.id,order_status:'Not Ordered'}]},
-{table:'follow_up_tasks',operation:'upsert',rows:[{id:taskId,store_id:ownOutlet.id,mde_id:data.mdes[0].id,task_title:'Test task',due_date:'2026-11-07',priority:'Medium',task_status:'Pending'}]}]);
+{table:'follow_up_tasks',operation:'upsert',rows:[{id:taskId,product_id:launchId,store_id:ownOutlet.id,mde_id:data.mdes[0].id,task_title:'Test task',due_date:'2026-11-07',priority:'Medium',task_status:'Pending'}]}]);
 await asUser(ids[1]);
 await apply([{table:'new_product_store_orders',operation:'upsert',rows:[{id:orderId,product_id:launchId,store_id:ownOutlet.id,order_status:'Ordered',updated_by:ids[1]}]},
-{table:'follow_up_tasks',operation:'upsert',rows:[{id:taskId,store_id:ownOutlet.id,mde_id:data.mdes[0].id,task_title:'Test task',due_date:'2026-11-07',priority:'Medium',task_status:'Completed'}]}]);
+{table:'follow_up_tasks',operation:'upsert',rows:[{id:taskId,product_id:launchId,store_id:ownOutlet.id,mde_id:data.mdes[0].id,task_title:'Test task',due_date:'2026-11-07',priority:'Medium',task_status:'Completed'}]}]);
 assert.equal((await db.query<{order_status:string}>('SELECT order_status FROM public.new_product_store_orders WHERE id=$1',[orderId])).rows[0].order_status,'Ordered');
 assert.equal((await db.query<{task_status:string}>('SELECT task_status FROM public.follow_up_tasks WHERE id=$1',[taskId])).rows[0].task_status,'Completed');
 await assert.rejects(()=>apply([{table:'sub_channels',operation:'upsert',rows:[{id:category,name:'Forbidden',channel_id:existingChannelId}]}]), /row-level security/);
@@ -70,6 +70,10 @@ await db.exec('RESET ROLE');
 await db.query('UPDATE auth.users SET email_confirmed_at=now() WHERE id=$1',[ids[2]]);
 await asUser(ids[2]); await db.query('SELECT public.ensure_my_profile()');
 assert.equal((await db.query<{role:string}>('SELECT role FROM public.profiles WHERE id=$1',[ids[2]])).rows[0].role,'admin');
+await asUser(ids[0]);
+assert.equal((await db.query<{product_id:string}>('SELECT product_id FROM public.follow_up_tasks WHERE id=$1',[taskId])).rows[0].product_id,launchId);
+await apply([{table:'new_products',operation:'delete',ids:[launchId]}]);
+assert.equal((await db.query<{product_id:null}>('SELECT product_id FROM public.follow_up_tasks WHERE id=$1',[taskId])).rows[0].product_id,null);
 await db.exec('RESET ROLE;');
 await assert.rejects(()=>db.query('DELETE FROM public.sub_channels WHERE id=$1',[data.outlets[0].subChannelId]),/foreign key/);
 console.log('PASS: referenced Sub-channel cannot be deleted');

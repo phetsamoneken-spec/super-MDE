@@ -1,3 +1,4 @@
+import { TaskProductOrders } from './TaskProductOrders';
 import React, { useState, useMemo } from 'react';
 import {
   CheckSquare,
@@ -16,7 +17,7 @@ import {
   X,
   Sparkles
 } from 'lucide-react';
-import { FollowUpTask, Store, Promotion, UserProfile, Language, TaskPriority, TaskStatus } from '../types';
+import { FollowUpTask, Store, Promotion, UserProfile, Language, TaskPriority, TaskStatus, NewProductLaunch, NewProductStoreOrder, NewProductOrderStatus } from '../types';
 import { translations } from '../i18n/translations';
 import { dataService } from '../services/dataService';
 import confetti from 'canvas-confetti';
@@ -24,6 +25,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { triggerHaptic } from '../utils/haptics';
 
 interface TodoListViewProps {
+  newProducts: NewProductLaunch[];
+  newProductOrders: NewProductStoreOrder[];
+  onOpenNewProductOrders: (productId:string,storeId:string)=>void;
   tasks: FollowUpTask[];
   stores: Store[];
   promotions: Promotion[];
@@ -35,6 +39,9 @@ interface TodoListViewProps {
 }
 
 export const TodoListView: React.FC<TodoListViewProps> = ({
+  newProducts,
+  newProductOrders,
+  onOpenNewProductOrders,
   tasks,
   stores,
   promotions,
@@ -45,6 +52,11 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
   onNavigateTab
 }) => {
   const t = translations[language];
+
+  const [view,setView]=useState<'tasks'|'purchases'>(tasks.length===0&&newProductOrders.length>0?'purchases':'tasks');
+  const [purchaseSearch,setPurchaseSearch]=useState('');
+  const [purchaseStatus,setPurchaseStatus]=useState<'all'|NewProductOrderStatus>('all');
+  const [purchaseLimit,setPurchaseLimit]=useState(20);
 
   // Filters (5 tabs: All, Today, Upcoming, Overdue, Completed)
   const [tabFilter, setTabFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue' | 'completed'>('all');
@@ -61,6 +73,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
   const [taskTitle, setTaskTitle] = useState('');
   const [selectedStoreId, setSelectedStoreId] = useState(stores[0]?.id || '');
   const [selectedPromoId, setSelectedPromoId] = useState(promotions[0]?.id || '');
+  const [selectedProductId, setSelectedProductId] = useState('');
   const [assignedUser, setAssignedUser] = useState(currentUser.id);
   const [dueDate, setDueDate] = useState(new Date().toISOString().substring(0, 10));
   const [priority, setPriority] = useState<TaskPriority>('High');
@@ -70,7 +83,27 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
   // Maps
   const storeMap = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores]);
   const promoMap = useMemo(() => new Map(promotions.map((p) => [p.id, p])), [promotions]);
-  const userMap = useMemo(() => new Map(dataService.getAllUsers().map((u) => [u.id, u.fullName])), []);
+  const users = useMemo(()=>dataService.getAllUsers(),[currentUser,salesReps,tasks]);
+  const userMap = new Map(users.map(u=>[u.id,u.fullName]));
+  const assignmentMap = useMemo(()=>new Map(users.map(u=>[u.id,u.mdeId||u.id])),[users]);
+  const productMap = useMemo(()=>new Map(newProducts.map(p=>[p.id,p])),[newProducts]);
+  const ordersByStore = useMemo(()=>{
+    const map=new Map<string,NewProductStoreOrder[]>();
+    for(const order of newProductOrders) { const list=map.get(order.storeId)||[]; list.push(order);map.set(order.storeId,list); }
+    return map;
+  },[newProductOrders]);
+
+  const visibleOrders=newProductOrders.filter(order=>storeMap.has(order.storeId)&&productMap.has(order.productId));
+  const purchased=visibleOrders.filter(order=>order.orderStatus==='Ordered');
+  const purchaseGroups=new Map<string,NewProductStoreOrder[]>();
+  for(const order of visibleOrders){
+    const store=storeMap.get(order.storeId)!;const product=productMap.get(order.productId)!;
+    if(salesFilter!=='all' && (assignmentMap.get(store.assignedSalesUser)||store.assignedSalesUser)!==salesFilter)continue;
+    if(purchaseStatus!=='all'&&order.orderStatus!==purchaseStatus)continue;
+    const query=purchaseSearch.trim().toLowerCase();
+    if(query&&![store.storeName,store.storeCode,product.productName,product.sku].some(value=>value.toLowerCase().includes(query)))continue;
+    const list=purchaseGroups.get(order.storeId)||[];list.push(order);purchaseGroups.set(order.storeId,list);
+  }
 
   // Today start and end timestamps
   const now = new Date();
@@ -95,14 +128,15 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
       if (priorityFilter !== 'all' && task.priority !== priorityFilter) return false;
 
       // Sales User Filter
-      if (salesFilter !== 'all' && task.assignedUser !== salesFilter) return false;
+      if (salesFilter !== 'all' && (assignmentMap.get(task.assignedUser)||task.assignedUser) !== salesFilter) return false;
 
       return true;
     });
-  }, [tasks, tabFilter, priorityFilter, salesFilter, startOfToday, endOfToday]);
+  }, [tasks, tabFilter, priorityFilter, salesFilter, startOfToday, endOfToday, assignmentMap]);
 
   const openNewTaskModal = () => {
     triggerHaptic('medium');
+    setSelectedProductId('');
     setTaskTitle('');
     setSelectedStoreId(stores[0]?.id || '');
     setSelectedPromoId(promotions[0]?.id || '');
@@ -117,6 +151,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
   const openEditModal = (task: FollowUpTask) => {
     triggerHaptic('light');
     setEditingTask(task);
+    setSelectedProductId(task.productId || '');
     setTaskTitle(task.taskTitle);
     setSelectedStoreId(task.storeId);
     setSelectedPromoId(task.promotionId || '');
@@ -137,6 +172,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
         taskTitle,
         storeId: selectedStoreId,
         promotionId: selectedPromoId || undefined,
+        productId: selectedProductId || undefined,
         assignedUser,
         dueDate: new Date(dueDate).toISOString(),
         priority,
@@ -149,6 +185,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
         taskTitle,
         storeId: selectedStoreId,
         promotionId: selectedPromoId || undefined,
+        productId: selectedProductId || undefined,
         assignedUser,
         dueDate: new Date(dueDate).toISOString(),
         priority,
@@ -226,8 +263,13 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
         </motion.button>
       </div>
 
+      <section className="calm-card rounded-3xl p-4 space-y-3" aria-label={language==='lo'?'ວຽກ ແລະ ການສັ່ງຊື້':'Tasks and purchases'}>
+        <div className="flex flex-wrap gap-2"><button onClick={()=>setView('tasks')} aria-pressed={view==='tasks'} className={`rounded-xl px-4 py-2 text-xs font-bold ${view==='tasks'?'bg-[var(--color-primary)] text-white':'bg-[var(--color-surface-secondary)]'}`}>{language==='lo'?'ລາຍການວຽກ':'Tasks'} ({tasks.length})</button><button onClick={()=>setView('purchases')} aria-pressed={view==='purchases'} className={`rounded-xl px-4 py-2 text-xs font-bold ${view==='purchases'?'bg-[var(--color-primary)] text-white':'bg-[var(--color-surface-secondary)]'}`}>{language==='lo'?'ການສັ່ງຊື້ສິນຄ້າໃໝ່':'New product purchases'} ({visibleOrders.length})</button></div>
+        <p className="text-xs text-[var(--color-text-secondary)]">{language==='lo'?'ລາຍການທີ່ສັ່ງຊື້ແລ້ວ':'Ordered records'}: <strong className="text-[var(--color-primary)]">{purchased.length}/{visibleOrders.length}</strong> · {language==='lo'?'ເບິ່ງໄດ້ເຖິງແມ່ນຍັງບໍ່ມີວຽກຕິດຕາມ':'Available even when no follow-up task exists'}</p>
+      </section>
+
       {/* Filter Tabs & Selectors */}
-      <div className="glass-panel p-3.5 sm:p-4 rounded-3xl shadow-sm space-y-2.5">
+      {view==='tasks' && <div className="glass-panel p-3.5 sm:p-4 rounded-3xl shadow-sm space-y-2.5">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
           
           {/* Quick Status 5 Tabs with haptics */}
@@ -362,10 +404,10 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
           </div>
 
         </div>
-      </div>
+      </div>}
 
       {/* Task Cards with Motion & Touch Responsiveness */}
-      <div className="space-y-2.5">
+      {view==='tasks' && <div className="space-y-2.5">
         {filteredTasks.length === 0 ? (
           <div className="py-12 text-center text-slate-400 glass-panel rounded-3xl">
             <CheckSquare className="w-12 h-12 mx-auto mb-3 opacity-30 text-emerald-600" />
@@ -384,6 +426,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
             return (
               <motion.div
                 key={task.id}
+                role="article" aria-label={task.taskTitle}
                 layout
                 whileTap={{ scale: 0.985 }}
                 className={`calm-card p-3.5 sm:p-4 rounded-3xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
@@ -463,6 +506,8 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
                       </span>
                     </div>
 
+                    <TaskProductOrders task={task} products={productMap} orders={ordersByStore.get(task.storeId)||[]} language={language} onOpen={onOpenNewProductOrders}/>
+
                     {task.remark && (
                       <p className="text-[11px] text-slate-500 italic mt-0.5">
                         "{task.remark}"
@@ -513,7 +558,15 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
             );
           })
         )}
-      </div>
+      </div>}
+
+      {view==='purchases' && <section className="space-y-3" aria-label={language==='lo'?'ລາຍການຊື້ສິນຄ້າໃໝ່':'New product purchase records'}>
+        <div className="calm-card rounded-2xl p-3 grid sm:grid-cols-2 gap-3"><input aria-label={language==='lo'?'ຄົ້ນຫາຮ້ານ ຫຼື ສິນຄ້າ':'Search outlet or product'} placeholder={language==='lo'?'ຄົ້ນຫາຮ້ານ ຫຼື ສິນຄ້າ':'Search outlet or product'} value={purchaseSearch} onChange={e=>{setPurchaseSearch(e.target.value);setPurchaseLimit(20);}} className="w-full min-w-0 border border-[var(--color-border)] rounded-xl p-3 text-xs"/>
+          <select aria-label={language==='lo'?'ສະຖານະການສັ່ງຊື້':'Purchase status'} value={purchaseStatus} onChange={e=>{setPurchaseStatus(e.target.value as typeof purchaseStatus);setPurchaseLimit(20);}} className="w-full min-w-0 border border-[var(--color-border)] rounded-xl p-3 text-xs"><option value="all">{language==='lo'?'ທຸກສະຖານະ':'All statuses'}</option>{(['Ordered','Not Ordered','Sample Provided','Follow-up Required','Declined'] as const).map(status=><option key={status} value={status}>{language==='lo'?({'Ordered':'ສັ່ງຊື້ແລ້ວ','Not Ordered':'ຍັງບໍ່ສັ່ງຊື້','Sample Provided':'ໃຫ້ຕົວຢ່າງແລ້ວ','Follow-up Required':'ຕ້ອງຕິດຕາມ','Declined':'ປະຕິເສດ'}[status]):status}</option>)}</select></div>
+        {purchaseGroups.size===0 && <p className="calm-card rounded-2xl p-6 text-sm text-[var(--color-text-secondary)]">{language==='lo'?'ບໍ່ພົບລາຍການສັ່ງຊື້ທີ່ກົງກັບການຄົ້ນຫາ':'No matching new product order records'}</p>}
+        {[...purchaseGroups].slice(0,purchaseLimit).map(([storeId,orders])=><article key={storeId} className="calm-card rounded-3xl p-4 min-w-0"><h3 className="text-sm font-bold break-words">{storeMap.get(storeId)?.storeName}</h3><p className="text-[11px] text-[var(--color-text-secondary)]">{storeMap.get(storeId)?.storeCode}</p><TaskProductOrders task={{storeId}} products={productMap} orders={orders} language={language} onOpen={onOpenNewProductOrders}/></article>)}
+        {purchaseGroups.size>purchaseLimit && <button onClick={()=>setPurchaseLimit(limit=>limit+20)} className="w-full rounded-xl border border-[var(--color-border)] p-3 text-sm font-bold">{language==='lo'?'ເບິ່ງເພີ່ມ':'Show more'} ({Math.min(purchaseLimit,purchaseGroups.size)}/{purchaseGroups.size})</button>}
+      </section>}
 
       {/* New / Edit Task Bottom Sheet Modal */}
       <AnimatePresence>
@@ -566,7 +619,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
                   </label>
                   <select
                     value={selectedStoreId}
-                    onChange={(e) => setSelectedStoreId(e.target.value)}
+                    onChange={(e) => {setSelectedStoreId(e.target.value);setSelectedProductId('');}}
                     className="w-full text-xs rounded-xl bg-white/80 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 p-2.5 outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     {stores.map((s) => (
@@ -589,6 +642,10 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
                       <option key={p.id} value={p.id}>{p.promotionName}</option>
                     ))}
                   </select>
+                </div>
+
+                <div><label htmlFor="task-linked-product" className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">{language === 'lo' ? 'ສິນຄ້າໃໝ່ທີ່ກ່ຽວຂ້ອງ (ບໍ່ບັງຄັບ)' : 'Linked new product (optional)'}</label>
+                  <select id="task-linked-product" value={selectedProductId} onChange={e=>setSelectedProductId(e.target.value)} className="w-full text-xs rounded-xl border border-[var(--color-border)] p-2.5"><option value="">{language === 'lo' ? 'ບໍ່ເຊື່ອມສິນຄ້າ / ວຽກທົ່ວໄປ' : 'None / general follow-up'}</option>{newProducts.filter(p=>currentUser.role==='admin'||p.id===selectedProductId||(ordersByStore.get(selectedStoreId)||[]).some(o=>o.productId===p.id)).map(p=><option key={p.id} value={p.id}>{p.productName}</option>)}</select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -668,7 +725,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
                     whileTap={{ scale: 0.94 }}
                     className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition"
                   >
-                    {t.save}
+                    {language === 'lo' ? 'ບັນທຶກວຽກ' : 'Save task'}
                   </motion.button>
                 </div>
 

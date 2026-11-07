@@ -11,9 +11,11 @@ test('connected codec keeps business MDE assignments separate from Auth foreign 
   assert.equal(outlet.assigned_sales_user,null);
   assert.equal(outlet.mde_id,'mde-reference');
   assert.equal(decodeRow(stores,outlet).assignedSalesUser,'mde-reference');
-  const task = encodeRow(tasks,{id:'task',assignedUser:'mde-reference'},ids);
+  const task = encodeRow(tasks,{id:'task',assignedUser:'mde-reference',productId:'linked-product'},ids);
   assert.equal(task.assigned_user,null);
   assert.equal(task.mde_id,'mde-reference');
+  assert.equal(task.product_id,'linked-product');
+  assert.equal(decodeRow(tasks,task).productId,'linked-product');
   assert.equal(decodeRow(tasks,task).assignedUser,'mde-reference');
 });
 test('connected changes ignore server timestamps and delete children before parents', () => {

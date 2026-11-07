@@ -1,3 +1,4 @@
+import { CampaignImage } from './CampaignImage';
 import { FieldIllustration } from './FieldIllustration';
 import { avatarFor } from '../utils/avatar';
 import React, { useState, useMemo } from 'react';
@@ -21,7 +22,7 @@ import {
   Trash2,
   FileSpreadsheet
 } from 'lucide-react';
-import { Store, Promotion, PromotionStore, FollowUpTask, UserProfile, Language } from '../types';
+import { Store, Promotion, PromotionStore, FollowUpTask, UserProfile, Language, NewProductLaunch, NewProductStoreOrder } from '../types';
 import { translations } from '../i18n/translations';
 import { dataService } from '../services/dataService';
 import { PromotionStoresDetailModal } from './PromotionStoresDetailModal';
@@ -30,6 +31,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { triggerHaptic } from '../utils/haptics';
 
 interface DashboardViewProps {
+  newProducts: NewProductLaunch[];
+  newProductOrders: NewProductStoreOrder[];
+  onOpenNewProductOrders: (productId:string, storeId?:string) => void;
   stores: Store[];
   promotions: Promotion[];
   promoStores: PromotionStore[];
@@ -44,6 +48,9 @@ interface DashboardViewProps {
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
+  newProducts,
+  newProductOrders,
+  onOpenNewProductOrders,
   stores,
   promotions,
   promoStores,
@@ -57,6 +64,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onRefreshData
 }) => {
   const t = translations[language];
+
+  const recent = <T extends {createdAt:string}>(items:T[]) => [...items].sort((a,b)=>(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0)).slice(0,3);
 
   // Compact promotion selector for dashboard KPIs
   const [selectedPromoId, setSelectedPromoId] = useState<string>(
@@ -507,8 +516,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </motion.button>
         </div>
 
-        <div className="space-y-3">
-          {promotions.slice(0, 3).map((promo) => {
+        <div className="grid sm:grid-cols-2 gap-3">
+          {promotions.length === 0 && <p className="calm-card rounded-2xl p-6 text-sm text-[var(--color-text-secondary)] sm:col-span-2">{language === 'lo' ? 'ຍັງບໍ່ມີໂປຣໂມຊັ່ນ. ເມື່ອເພີ່ມແລ້ວ ຮູບຈະສະແດງຢູ່ນີ້.' : 'No promotions yet. Added promotions will appear here with their images.'}</p>}
+          {recent(promotions).map((promo) => {
             const pStores = promoStores.filter((ps) => ps.promotionId === promo.id);
             const ord = pStores.filter((ps) => ps.orderStatus === 'Ordered').length;
             const conv = pStores.length > 0 ? Math.round((ord / pStores.length) * 100) : 0;
@@ -525,11 +535,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               >
                 {/* 1. Large Image Banner */}
                 <div className="relative h-36 sm:h-44 w-full bg-slate-950 overflow-hidden">
-                  <img
-                    src={promo.imageUrl || `${import.meta.env.BASE_URL}icons/image-placeholder.svg`}
-                    alt={promo.promotionName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
-                  />
+                  <CampaignImage src={promo.imageUrl} alt={promo.promotionName} language={language} className="w-full h-full group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
 
                   {/* Top: Status Badge + Admin Edit/Delete */}
@@ -635,6 +641,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           })}
         </div>
       </div>
+
+      <section className="space-y-3" aria-labelledby="dashboard-products-title">
+        <div className="flex items-center justify-between gap-3 px-1"><h3 id="dashboard-products-title" className="text-xs font-bold flex items-center gap-2"><PackagePlus size={16} className="text-[var(--color-primary)]"/>{language === 'lo' ? 'ສິນຄ້າໃໝ່ຫຼ້າສຸດ' : 'Latest New Products'}</h3><button onClick={()=>handleCardClick('newProducts')} className="text-xs font-bold text-[var(--color-primary)]">{language === 'lo' ? 'ທັງໝົດ' : 'View all'}</button></div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {newProducts.length === 0 && <p className="calm-card rounded-2xl p-6 text-sm text-[var(--color-text-secondary)] sm:col-span-2">{language === 'lo' ? 'ຍັງບໍ່ມີສິນຄ້າໃໝ່. ເມື່ອເພີ່ມແລ້ວ ຮູບຈະສະແດງຢູ່ນີ້.' : 'No new products yet. Added products will appear here with their images.'}</p>}
+          {recent(newProducts).map(product=>{
+            const orders = newProductOrders.filter(order=>order.productId===product.id);
+            const ordered = orders.filter(order=>order.orderStatus==='Ordered').length;
+            return <motion.button key={product.id} whileTap={{scale:.985}} onClick={()=>onOpenNewProductOrders(product.id)} className="calm-card rounded-3xl overflow-hidden text-left min-w-0" aria-label={`${language === 'lo' ? 'ເບິ່ງການສັ່ງຊື້' : 'View orders'}: ${product.productName}`}>
+              <CampaignImage src={product.imageUrl} alt={product.productName} language={language} contain className="h-40 sm:h-44 w-full"/>
+              <div className="p-4 space-y-2"><div className="flex justify-between gap-2"><h4 className="text-sm font-bold break-words">{product.productName}</h4><span className="text-[10px] text-[var(--color-primary)] shrink-0">{product.status}</span></div><p className="text-xs text-[var(--color-text-secondary)]">{product.sku} · {product.packSize}</p><div className="flex items-center justify-between text-xs gap-2"><span>{language === 'lo' ? 'ຮ້ານທີ່ສັ່ງຊື້' : 'Stores ordered'}: <strong>{ordered}/{orders.length}</strong></span><span className="text-[var(--color-primary)] flex items-center gap-1">{language === 'lo' ? 'ເບິ່ງການສັ່ງຊື້' : 'View orders'}<ChevronRight size={14}/></span></div></div>
+            </motion.button>;
+          })}
+        </div>
+      </section>
 
       {/* 8. New Product Launch Orders Banner (NPD Distribution) */}
       <motion.div

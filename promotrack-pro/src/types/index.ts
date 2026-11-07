@@ -91,6 +91,7 @@ export interface PromotionStore {
 }
 
 export interface FollowUpTask {
+  productId?: string;
   id: string;
   storeId: string;
   promotionId?: string;

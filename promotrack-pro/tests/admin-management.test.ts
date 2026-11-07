@@ -87,3 +87,18 @@ test('sales cannot add or delete Sub-channels or new products through the servic
   assert.equal(dataService.deleteNewProduct('any-product').success, false);
   assert.deepEqual([...storage.data], snapshot);
 });
+
+test('NPD follow-up keeps the exact product and outlet across persisted task reads', () => {
+  const a=addProduct().product!, b=addProduct().product!;
+  const store=dataService.getStores()[0];
+  dataService.assignStoresToNewProduct(a.id,[store.id]);
+  dataService.assignStoresToNewProduct(b.id,[store.id]);
+  const order=dataService.getNewProductStoreOrders(a.id)[0];
+  const result=dataService.updateNewProductOrderStatus({orderId:order.id,productId:a.id,storeId:store.id,newStatus:'Sample Provided',sampleQty:2,sampleGivenDate:'2026-11-07T00:00:00Z',nextFollowUpDate:'2026-11-10T00:00:00Z',createAutoTask:true});
+  assert.equal(result.success,true);
+  const task=dataService.getTasks().find(t=>t.productId===a.id)!;
+  assert(task);assert.equal(task.storeId,store.id);assert.notEqual(task.productId,b.id);
+  dataService.updateNewProductOrderStatus({orderId:order.id,productId:a.id,storeId:store.id,newStatus:'Ordered',orderQuantity:12,orderAmount:120000});
+  assert.equal(dataService.getNewProductStoreOrders(a.id)[0].orderStatus,'Ordered');
+  assert.equal(dataService.getTasks().find(t=>t.id===task.id)!.productId,a.id);
+});

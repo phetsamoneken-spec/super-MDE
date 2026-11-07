@@ -11,7 +11,7 @@ export const entities = [
   { key: 'newProducts', table: 'new_products', fields: 'productName sku category launchDate endDate packSize unitPrice targetDistributionRate targetUnitsPerStore description imageUrl status targetSubChannels createdBy' },
   { key: 'promoStores', table: 'promotion_stores', fields: 'storeId promotionId orderStatus orderDate orderAmount lastFollowUpDate nextFollowUpDate remark updatedBy' },
   { key: 'newProductStoreOrders', table: 'new_product_store_orders', fields: 'productId storeId orderStatus orderQuantity orderAmount orderDate invoiceNumber sampleGivenDate sampleQty customerFeedback nextFollowUpDate updatedBy' },
-  { key: 'tasks', table: 'follow_up_tasks', fields: 'storeId promotionId taskTitle dueDate priority taskStatus remark' },
+  { key: 'tasks', table: 'follow_up_tasks', fields: 'storeId promotionId productId taskTitle dueDate priority taskStatus remark' },
   { key: 'auditLogs', table: 'order_status_history', fields: 'promotionStoreId storeId promotionId oldStatus newStatus changedBy notes' }
 ] as const;
 type Entity = typeof entities[number];

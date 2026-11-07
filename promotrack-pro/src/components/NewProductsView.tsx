@@ -40,6 +40,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { triggerHaptic } from '../utils/haptics';
 
 interface NewProductsViewProps {
+  initialProductId?: string;
+  initialStoreId?: string;
   onManageSubChannels: () => void;
   newProducts: NewProductLaunch[];
   storeOrders: NewProductStoreOrder[];
@@ -53,6 +55,8 @@ interface NewProductsViewProps {
 const PRESET_PRODUCT_IMAGES = [''];
 
 export const NewProductsView: React.FC<NewProductsViewProps> = ({
+  initialProductId,
+  initialStoreId,
   onManageSubChannels,
   newProducts,
   storeOrders,
@@ -66,14 +70,15 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
   const isAdmin = currentUser.role === 'admin';
 
   // Primary view tabs: 'catalog' (ລາຍການສິນຄ້າໃໝ່) vs 'tracking' (ຕິດຕາມການສັ່ງຊື້)
-  const [activeViewTab, setActiveViewTab] = useState<'catalog' | 'tracking'>('catalog');
+  const [activeViewTab, setActiveViewTab] = useState<'catalog' | 'tracking'>(initialProductId ? 'tracking' : 'catalog');
 
   // Filters for Catalog
   const [productStatusFilter, setProductStatusFilter] = useState<'All' | NewProductStatus>('All');
   const [catalogSearch, setCatalogSearch] = useState('');
 
   // Filters for Order Tracking
-  const [selectedProductId, setSelectedProductId] = useState<string>('all');
+  const [selectedProductId, setSelectedProductId] = useState<string>(initialProductId || 'all');
+  const [focusedStoreId, setFocusedStoreId] = useState(initialStoreId || 'all');
   const [subChannelFilter, setSubChannelFilter] = useState<string>('all');
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
   const [trackingSearch, setTrackingSearch] = useState('');
@@ -181,6 +186,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
       const store = storeMap.get(order.storeId);
       if (!store) return false;
 
+      if (focusedStoreId !== 'all' && order.storeId !== focusedStoreId) return false;
       if (selectedProductId !== 'all' && order.productId !== selectedProductId) return false;
       if (subChannelFilter !== 'all' && store.subChannel !== subChannelFilter) return false;
       if (orderStatusFilter !== 'all' && order.orderStatus !== orderStatusFilter) return false;
@@ -195,7 +201,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
 
       return true;
     });
-  }, [storeOrders, storeMap, selectedProductId, subChannelFilter, orderStatusFilter, trackingSearch]);
+  }, [storeOrders, storeMap, focusedStoreId, selectedProductId, subChannelFilter, orderStatusFilter, trackingSearch]);
 
   // Aggregate stats for New Products
   const overallStats = useMemo(() => {
@@ -865,6 +871,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
       {/* ======================================================== */}
       {/* VIEW TAB 2: LAUNCH ORDER TRACKING BY SUB-CHANNEL         */}
       {/* ======================================================== */}
+      {activeViewTab === 'tracking' && focusedStoreId !== 'all' && <div className="calm-card rounded-2xl p-3 flex items-center justify-between gap-3 text-xs"><span>{language === 'lo' ? 'ຮ້ານຄ້າ:' : 'Outlet:'} {storeMap.get(focusedStoreId)?.storeName}</span><button onClick={()=>setFocusedStoreId('all')} className="font-bold text-[var(--color-primary)]">{language === 'lo' ? 'ເບິ່ງທຸກຮ້ານ' : 'Show all outlets'}</button></div>}
       {activeViewTab === 'tracking' && (
         <div className="space-y-4">
           
