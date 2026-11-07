@@ -498,3 +498,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .account-modal-body { padding: 18px; }
   .account-modal-actions .account-button { flex: 1; padding: 10px; font-size: 11px; }
 }
+
+/* Green app chrome, with white labels in both light and dark themes. */
+.app-topbar { background: #146c4b; border-color: #29825f; color: #fff; }
+.app-topbar button { color: #fff; background-color: #ffffff12; border-color: #ffffff35; }
+.app-topbar button:hover { color: #fff; background-color: #ffffff25; }
+.app-topbar button svg,.app-topbar button div { color: inherit; }
+.app-topbar h1,.app-topbar h1 + p { color: #fff; }
+.mobile-dock > div { background: #146c4b; border-color: #29825f; }
+.mobile-dock button,.mobile-dock button svg { color: #d9f6e8; }
+.mobile-dock button[aria-current=page] { background: #ffffff26; color: #fff; }
+.mobile-dock button[aria-current=page] svg { color: #fff; }
+.mobile-dock button > div[style] { border-color: transparent; }
+.accounts-row-actions { flex-wrap: wrap; }
+.mobile-dock button > .absolute { background: transparent; border-color: transparent; }
