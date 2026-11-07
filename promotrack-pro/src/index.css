@@ -225,3 +225,86 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (min-width: 1024px) {
   .app-sidebar { top: var(--app-sidebar-top, 64px); z-index: 30; width: 256px; padding: 16px; }
 }
+
+/* Dashboard bento palette: scoped so the rest of the app keeps its theme. */
+.colorful-dashboard { background: radial-gradient(ellipse at 90% 0, #ede9ff60, transparent 42%); }
+.colorful-dashboard .dashboard-kicker { color: #766499; font-size: 9px; font-weight: 800; letter-spacing: .12em; line-height: 1.8; }
+.colorful-dashboard .dashboard-greeting h1 { font-size: clamp(20px,2.4vw,26px); letter-spacing: -.025em; }
+.colorful-dashboard .dashboard-greeting img { border-radius: 17px; box-shadow: 0 0 0 5px var(--color-surface), 0 8px 20px #4b378215; }
+.colorful-dashboard .dashboard-bell { background: #fff5df; color: #966313; border-color: #efdfba; min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.colorful-dashboard .dashboard-hero { background: radial-gradient(ellipse at 95% 90%, #9470df55, transparent 55%), linear-gradient(115deg,#302258 0%,#5140a3 60%,#6d4dde 100%); min-height: 252px; border-radius: 30px; padding: 30px; box-shadow: 0 18px 45px -25px #5339af80; }
+.colorful-dashboard .dashboard-workspace-pill { display: inline-flex; align-items: center; gap: 6px; background: #ffffff14; border: 1px solid #ffffff2e; border-radius: 50px; padding: 5px 10px; font-size: 9px; font-weight: 700; letter-spacing: .04em; margin-bottom: 14px; max-width: 100%; }
+.colorful-dashboard .dashboard-hero .eyebrow { color: #d3c9f2; }
+.colorful-dashboard .dashboard-hero h2 { font-size: clamp(29px,3.4vw,42px); line-height: 1.3; margin: 9px 0 21px; }
+.colorful-dashboard .dashboard-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+.colorful-dashboard .hero-cta { background: #e1f49d; color: #312b55; border-radius: 14px; box-shadow: 0 6px 16px #21124520; }
+.colorful-dashboard .hero-today { color: #fff; background: #ffffff14; border: 1px solid #ffffff2e; border-radius: 14px; padding: 9px 12px; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; font-weight: 600; }
+.colorful-dashboard .dashboard-hero .field-art { height: 210px; }
+.colorful-dashboard .dashboard-hero .field-store { width: 245px; }
+.colorful-dashboard .dashboard-hero .field-orbit { border-color: #ffffff29; width: 190px; height: 190px; }
+.colorful-dashboard .dashboard-hero .field-orbit-two { width: 260px; height: 260px; }
+.dashboard-section-heading h2 { font-size: 20px; line-height: 1.6; letter-spacing: -.02em; font-weight: 800; }
+.colorful-dashboard .dashboard-promo-filter { margin-top: 12px; border: 1px solid var(--color-border); background: var(--color-surface); padding: 10px 12px; }
+.colorful-dashboard .dashboard-promo-filter select { min-height: 36px; background: var(--color-bg); max-width: 65%; }
+.colorful-dashboard .dashboard-metrics > .metric-card { position: relative; overflow: hidden; min-width: 0; display: flex; flex-direction: column; text-align: left; gap: 10px; min-height: 170px; padding: 18px; border: 1px solid transparent; border-radius: 24px; box-shadow: 0 8px 24px -22px currentColor; }
+.metric-card::after { content: ''; position: absolute; width: 110px; height: 110px; border-radius: 50%; right: -55px; bottom: -55px; border: 20px solid currentColor; opacity: .045; pointer-events: none; }
+.colorful-dashboard .metric-violet { background: #eee9ff; color: #493288; }
+.colorful-dashboard .metric-mint { background: #def5eb; color: #155b48; }
+.colorful-dashboard .metric-peach { background: #fff0e4; color: #8c461e; }
+.colorful-dashboard .metric-blue { background: #e5f0ff; color: #234b8c; }
+.metric-topline { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.metric-label { font-size: 11px; line-height: 1.65; font-weight: 650; }
+.metric-icon { display: grid; place-items: center; flex-shrink: 0; width: 33px; height: 33px; border-radius: 12px; background: #ffffff80; }
+.metric-value { font-size: 32px; line-height: 1.1; font-weight: 800; letter-spacing: -.045em; font-variant-numeric: tabular-nums; margin-top: auto; }
+.metric-bottomline { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 10px; line-height: 1.6; opacity: .85; }
+.metric-bottomline svg { flex-shrink: 0; }
+.metric-progress { height: 5px; border-radius: 6px; overflow: hidden; background: #234b8c18; }
+.metric-progress span { height: 100%; display: block; border-radius: inherit; background: currentColor; transition: width .35s ease; }
+.colorful-dashboard .dashboard-quick-actions { padding: 0; border: 0; background: transparent; gap: 12px; }
+.colorful-dashboard .dashboard-quick-actions > button { min-width: 0; min-height: 96px; flex-direction: column; gap: 9px; padding: 12px 8px; font-size: 11px; line-height: 1.6; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: 22px; box-shadow: 0 6px 20px -20px #32215850; }
+.colorful-dashboard .dashboard-quick-actions > button > svg { width: 34px; height: 34px; padding: 8px; border-radius: 12px; color: #6544a3; background: #f0eaff; flex-shrink: 0; }
+.colorful-dashboard .dashboard-quick-actions > button:nth-child(2) > svg { color: #197157; background: #e0f6ea; }
+.colorful-dashboard .dashboard-quick-actions > button:nth-child(3) > svg { color: #a75829; background: #fff0e2; }
+.colorful-dashboard h3 { font-size: 13px; letter-spacing: 0; line-height: 1.7; }
+.colorful-dashboard .dashboard-task-empty { background: #f0faf5; border-color: #d5eade; color: #39715a; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 22px; text-align: left; }
+.colorful-dashboard .dashboard-promotions > div:first-child > div > svg { box-sizing: content-box; background: #eee9ff; color: #6843ae; padding: 9px; border-radius: 12px; }
+.colorful-dashboard .dashboard-products > div:first-child h3 > svg { box-sizing: content-box; background: #fff0de; color: #a15c20; padding: 9px; border-radius: 12px; }
+.colorful-dashboard .dashboard-products .calm-card { border-radius: 25px; box-shadow: 0 10px 30px -24px #32215840; }
+.colorful-dashboard .dashboard-products button > div:first-child { background: linear-gradient(140deg,#f6f1ff,#edf6ff); }
+.colorful-dashboard .dashboard-npd-banner { background: linear-gradient(110deg,#e9e4ff,#f2efff); border-color: #d9cff4; padding: 20px; }
+.colorful-dashboard .dashboard-npd-banner h4 { color: #443372; }
+.colorful-dashboard .dashboard-npd-banner > div:first-child > div:first-child { background: #7050b4; }
+.dark .colorful-dashboard { background: radial-gradient(ellipse at 90% 0,#33275450,transparent 42%); }
+.dark .colorful-dashboard .dashboard-kicker { color: #baa8dc; }
+.dark .colorful-dashboard .dashboard-bell { background: #382f1b; color: #e5c274; border-color: #5b4a2c; }
+.dark .colorful-dashboard .metric-violet { background: #2e2547; color: #e0d2ff; }
+.dark .colorful-dashboard .metric-mint { background: #193c31; color: #a2e6c9; }
+.dark .colorful-dashboard .metric-peach { background: #433022; color: #ffd0aa; }
+.dark .colorful-dashboard .metric-blue { background: #24334c; color: #bed6ff; }
+.dark .colorful-dashboard .metric-icon { background: #ffffff0f; }
+.dark .colorful-dashboard .metric-progress { background: #ffffff16; }
+.dark .colorful-dashboard .dashboard-quick-actions > button:nth-child(1) > svg { color: #dac6ff; background: #34254d; }
+.dark .colorful-dashboard .dashboard-quick-actions > button:nth-child(2) > svg { color: #a6e4ca; background: #193c31; }
+.dark .colorful-dashboard .dashboard-quick-actions > button:nth-child(3) > svg { color: #ffd0aa; background: #433022; }
+.dark .colorful-dashboard .dashboard-task-empty { background: #19362b; border-color: #2f5142; color: #b2d9c3; }
+.dark .colorful-dashboard .dashboard-promotions > div:first-child > div > svg { background: #34254d; color: #dac6ff; }
+.dark .colorful-dashboard .dashboard-products > div:first-child h3 > svg { background: #433022; color: #ffd0aa; }
+.dark .colorful-dashboard .dashboard-products button > div:first-child { background: linear-gradient(140deg,#2e2547,#24334c); }
+.dark .colorful-dashboard .dashboard-npd-banner { background: linear-gradient(110deg,#302643,#28233c); border-color: #4c3e66; }
+.dark .colorful-dashboard .dashboard-npd-banner h4 { color: #e0d2ff; }
+@media (max-width: 639px) {
+  .colorful-dashboard .dashboard-hero { min-height: 260px; padding: 22px; }
+  .colorful-dashboard .dashboard-hero h2 { font-size: clamp(25px,6.7vw,29px); line-height: 1.4; }
+  .colorful-dashboard .dashboard-hero .field-art { width: 38%; height: 180px; }
+  .colorful-dashboard .dashboard-hero .field-store { width: 175px; }
+  .colorful-dashboard .dashboard-hero .field-orbit { width: 125px; height: 125px; }
+  .colorful-dashboard .dashboard-hero .field-orbit-two { width: 185px; height: 185px; }
+  .colorful-dashboard .dashboard-workspace-pill { font-size: 8px; padding: 5px 8px; }
+  .colorful-dashboard .dashboard-hero-actions { margin-right: -24px; }
+  .colorful-dashboard .hero-today { font-size: 10px; }
+  .colorful-dashboard .dashboard-metrics > .metric-card { min-height: 175px; padding: 16px; gap: 10px; }
+  .colorful-dashboard .metric-value { font-size: 31px; }
+  .colorful-dashboard .metric-icon { width: 29px; height: 29px; border-radius: 10px; }
+  .colorful-dashboard .dashboard-quick-actions { gap: 8px; }
+  .colorful-dashboard .dashboard-quick-actions > button { padding: 12px 7px; font-size: 10px; }
+}

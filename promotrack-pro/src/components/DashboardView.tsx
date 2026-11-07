@@ -20,7 +20,8 @@ import {
   ChevronRight,
   Edit2,
   Trash2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Sparkles
 } from 'lucide-react';
 import { Store, Promotion, PromotionStore, FollowUpTask, UserProfile, Language, NewProductLaunch, NewProductStoreOrder } from '../types';
 import { translations } from '../i18n/translations';
@@ -124,7 +125,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     weekday: 'short',
     day: 'numeric',
     month: 'short',
-    year: 'numeric'
+    year: 'numeric',
+    timeZone: 'Asia/Bangkok'
   });
 
   // Today & Overdue tasks
@@ -147,11 +149,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     onNavigateTab(tab);
   };
 
+  const metrics = [
+    {tone:'violet',label:t.kpiTotalStores,value:totalStores.toLocaleString(language==='lo'?'lo-LA':'en-US'),caption:language==='lo'?'ຮ້ານຄ້າທັງໝົດ':'Total outlets',icon:StoreIcon,tab:'stores'},
+    {tone:'mint',label:t.kpiOrderedStores,value:orderedStores.toLocaleString(),caption:`${orderedStores} / ${participatingCount} ${language==='lo'?'ຮ້ານສັ່ງຊື້ແລ້ວ':'participating outlets ordered'}`,icon:CheckCircle2,tab:'tracking'},
+    {tone:'peach',label:t.kpiNotOrderedStores,value:notOrderedStores.toLocaleString(),caption:language==='lo'?'ຍັງບໍ່ທັນສັ່ງຊື້':'Awaiting an order',icon:Clock,tab:'tracking'},
+    {tone:'blue',label:t.kpiConversionRate,value:`${conversionRate}%`,caption:language==='lo'?'ຈາກຮ້ານທີ່ເຂົ້າຮ່ວມໂປຣໂມຊັ່ນ':'Of participating promotion outlets',icon:Percent,tab:'tracking'}
+  ];
+
   return (
-    <div className="dashboard-page space-y-5 max-w-3xl mx-auto">
+    <div className="dashboard-page colorful-dashboard space-y-6 max-w-5xl mx-auto">
 
       {/* 1. Header (Greeting, Date, Notification Icon, Avatar) */}
-      <div className="flex items-center justify-between pb-1">
+      <div className="dashboard-greeting flex items-center justify-between gap-3 pb-1">
         <div className="flex items-center gap-3">
           <img
             src={avatarFor(currentUser)}
@@ -159,6 +168,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             className="w-11 h-11 rounded-2xl object-cover ring-2 ring-[var(--color-primary)]"
           />
           <div>
+            <p className="dashboard-kicker">{language==='lo'?'ຍິນດີຕ້ອນຮັບກັບຄືນ':'WELCOME BACK'}</p>
             <h1 className="text-base font-black text-[var(--color-text-primary)] leading-tight">
               {language === 'lo' ? `ສະບາຍດີ, ${currentUser.fullName.split(' ')[0]}` : `Hello, ${currentUser.fullName.split(' ')[0]}`}
             </h1>
@@ -176,7 +186,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               triggerHaptic('light');
               setShowNotifications(!showNotifications);
             }}
-            className="p-2.5 rounded-2xl calm-surface-secondary text-[var(--color-text-primary)] relative border border-[var(--color-border)]"
+            aria-label={language==='lo'?'ແຈ້ງເຕືອນວຽກ':'Task notifications'} aria-expanded={showNotifications}
+            className="dashboard-bell p-2.5 rounded-2xl calm-surface-secondary text-[var(--color-text-primary)] relative border border-[var(--color-border)]"
           >
             <Bell className="w-4 h-4" />
             {overdueTasks.length > 0 && (
@@ -232,13 +243,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       <section className="dashboard-hero">
-        <div className="dashboard-hero-copy"><p className="eyebrow">{language === 'lo' ? 'ພາບລວມປະຈຳວັນ' : 'YOUR DAILY OVERVIEW'}</p>
-        <h2>{language === 'lo' ? 'ພ້ອມສຳລັບ' : 'A fresh day.'}<br/>{language === 'lo' ? 'ທຸກໂອກາດ.' : 'New possibilities.'}</h2>
-        <button onClick={() => handleCardClick('stores')} className="hero-cta">{language === 'lo' ? 'ເບິ່ງຮ້ານຄ້າ' : 'Explore outlets'}<ArrowRight size={15}/></button></div>
+        <div className="dashboard-hero-copy"><div className="dashboard-workspace-pill"><Sparkles size={12}/>{currentUser.role==='admin' ? (language==='lo'?'ພື້ນທີ່ຈັດການຂອງທ່ານ':'YOUR TEAM WORKSPACE') : (language==='lo'?'ພື້ນທີ່ການຂາຍຂອງທ່ານ':'YOUR SALES WORKSPACE')}</div><p className="eyebrow">{language === 'lo' ? 'ພາບລວມປະຈຳວັນ' : 'YOUR DAILY OVERVIEW'}</p>
+        <h2>{language === 'lo' ? 'ພ້ອມສຳລັບ' : 'A fresh day.'}<br/>{language === 'lo' ? 'ທຸກໂອກາດ.' : 'Make it count.'}</h2>
+        <div className="dashboard-hero-actions"><button onClick={() => handleCardClick('stores')} className="hero-cta">{language === 'lo' ? 'ເບິ່ງຮ້ານຄ້າ' : 'Explore outlets'}<ArrowRight size={15}/></button><button onClick={()=>handleCardClick('tasks')} className="hero-today"><Calendar size={14}/>{todayFollowUps.length} {language==='lo'?'ວຽກມື້ນີ້':'due today'}</button></div></div>
         <FieldIllustration />
       </section>
       {/* 2. Compact Promotion Selector */}
-      <div className="calm-surface p-2 rounded-2xl flex items-center justify-between gap-2">
+      <div className="dashboard-section-heading"><div><p className="dashboard-kicker">{language==='lo'?'ຂໍ້ມູນຂອງທ່ານ':'AT A GLANCE'}</p><h2>{language==='lo'?'ພາບລວມໂປຣໂມຊັ່ນ':'Promotion overview'}</h2></div></div>
+      <div className="dashboard-promo-filter calm-surface p-2 rounded-2xl flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 pl-2">
           <Tag className="w-3.5 h-3.5 text-[var(--color-primary)] shrink-0" />
           <span className="text-xs font-semibold text-[var(--color-text-secondary)]">
@@ -246,7 +258,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </span>
         </div>
 
-        <select
+        <select aria-label={language==='lo'?'ໂປຣໂມຊັ່ນສຳລັບຕົວເລກສະຫຼຸບ':'Promotion for summary metrics'}
           value={selectedPromoId}
           onChange={(e) => {
             triggerHaptic('light');
@@ -261,116 +273,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </select>
       </div>
 
-      {/* 3. Two-Column KPI Grid */}
-      <div className="dashboard-metrics grid grid-cols-2 gap-3">
-        
-        {/* KPI 1: Total Stores */}
-        <motion.div
-          whileTap={{ scale: 0.96 }}
-          onClick={() => handleCardClick('stores')}
-          className="calm-card p-3.5 rounded-3xl cursor-pointer hover:border-[var(--color-primary)] transition flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
-              {t.kpiTotalStores}
-            </span>
-            <div className="w-7 h-7 rounded-xl bg-[var(--color-surface-secondary)] flex items-center justify-center text-[var(--color-primary)]">
-              <StoreIcon className="w-3.5 h-3.5" />
-            </div>
-          </div>
-
-          <div className="mt-2.5">
-            <div className="text-2xl font-black text-[var(--color-text-primary)] tracking-tight">
-              {totalStores}
-            </div>
-            <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">
-              {language === 'lo' ? 'ຮ້ານຄ້າທັງໝົດ' : 'Total outlets'}
-            </p>
-          </div>
-        </motion.div>
-
-        {/* KPI 2: Ordered Stores */}
-        <motion.div
-          whileTap={{ scale: 0.96 }}
-          onClick={() => handleCardClick('tracking')}
-          className="calm-card p-3.5 rounded-3xl cursor-pointer hover:border-[var(--color-primary)] transition flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
-              {t.kpiOrderedStores}
-            </span>
-            <div className="w-7 h-7 rounded-xl bg-emerald-500/10 flex items-center justify-center text-[var(--color-success)]">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-            </div>
-          </div>
-
-          <div className="mt-2.5">
-            <div className="text-2xl font-black text-[var(--color-success)] tracking-tight">
-              {orderedStores}
-            </div>
-            <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">
-              {orderedStores} / {participatingCount} {language === 'lo' ? 'ຮ້ານສັ່ງຊື້ແລ້ວ' : 'ordered'}
-            </p>
-          </div>
-        </motion.div>
-
-        {/* KPI 3: Not Ordered Stores */}
-        <motion.div
-          whileTap={{ scale: 0.96 }}
-          onClick={() => handleCardClick('tracking')}
-          className="calm-card p-3.5 rounded-3xl cursor-pointer hover:border-[var(--color-primary)] transition flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
-              {t.kpiNotOrderedStores}
-            </span>
-            <div className="w-7 h-7 rounded-xl bg-[var(--color-surface-secondary)] flex items-center justify-center text-[var(--color-text-secondary)]">
-              <Clock className="w-3.5 h-3.5" />
-            </div>
-          </div>
-
-          <div className="mt-2.5">
-            <div className="text-2xl font-black text-[var(--color-text-primary)] tracking-tight">
-              {notOrderedStores}
-            </div>
-            <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">
-              {language === 'lo' ? 'ຍັງບໍ່ທັນສັ່ງຊື້' : 'Pending orders'}
-            </p>
-          </div>
-        </motion.div>
-
-        {/* KPI 4: Conversion Rate */}
-        <motion.div
-          whileTap={{ scale: 0.96 }}
-          className="calm-card p-3.5 rounded-3xl flex flex-col justify-between border-[var(--color-border)]"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
-              {t.kpiConversionRate}
-            </span>
-            <div className="w-7 h-7 rounded-xl bg-[var(--color-surface-secondary)] flex items-center justify-center text-[var(--color-primary)]">
-              <Percent className="w-3.5 h-3.5" />
-            </div>
-          </div>
-
-          <div className="mt-2.5">
-            <div className="text-2xl font-black text-[var(--color-primary)] tracking-tight">
-              {conversionRate}%
-            </div>
-            {/* Simple progress bar */}
-            <div className="w-full bg-[var(--color-surface-secondary)] h-1.5 rounded-full mt-1.5 overflow-hidden">
-              <div
-                className="bg-[var(--color-primary)] h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, parseFloat(conversionRate))}%` }}
-              />
-            </div>
-          </div>
-        </motion.div>
-
+      <div className="dashboard-metrics grid grid-cols-2 xl:grid-cols-4 gap-3" aria-label={language==='lo'?'ຕົວເລກສະຫຼຸບ':'Summary metrics'}>
+        {metrics.map((metric,index)=>{
+          const Icon=metric.icon;
+          return <motion.button type="button" key={metric.tone} whileHover={{y:-3}} whileTap={{scale:.98}} onClick={()=>handleCardClick(metric.tab)} className={`metric-card metric-${metric.tone}`} aria-label={`${metric.label}: ${metric.value}`}>
+            <div className="metric-topline"><span className="metric-label">{metric.label}</span><span className="metric-icon"><Icon size={17}/></span></div>
+            <div className="metric-value">{metric.value}</div>
+            {index===3 && <div className="metric-progress" role="progressbar" aria-label={metric.label} aria-valuenow={Number(conversionRate)} aria-valuemin={0} aria-valuemax={100}><span style={{width:`${Math.min(100,Number(conversionRate))}%`}}/></div>}
+            <div className="metric-bottomline"><span>{metric.caption}</span><ArrowRight size={13} aria-hidden="true"/></div>
+          </motion.button>;
+        })}
       </div>
 
       {/* 4. Quick Actions Row */}
-      <div className="calm-surface p-2.5 rounded-3xl flex items-center justify-between gap-2">
+      <div className="dashboard-quick-actions calm-surface p-2.5 rounded-3xl flex items-center justify-between gap-2">
         <motion.button
           whileTap={{ scale: 0.94 }}
           onClick={() => handleCardClick('tracking')}
@@ -424,8 +340,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {todayFollowUps.length === 0 ? (
-          <div className="calm-card p-4 rounded-3xl text-center text-xs text-[var(--color-text-secondary)]">
-            {language === 'lo' ? 'ບໍ່ມີວຽກຄົບກຳນົດມື້ນີ້' : 'No follow-up tasks due today.'}
+          <div className="dashboard-task-empty calm-card p-4 rounded-3xl text-center text-xs text-[var(--color-text-secondary)]">
+            <CheckCircle2 size={23} className="shrink-0"/>{language === 'lo' ? 'ບໍ່ມີວຽກຄົບກຳນົດມື້ນີ້' : 'No follow-up tasks due today.'}
           </div>
         ) : (
           <div className="space-y-2">
@@ -498,7 +414,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       )}
 
       {/* 7. Recent Promotions Section */}
-      <div className="space-y-2">
+      <div className="dashboard-promotions space-y-3">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1.5">
             <Tag className="w-3.5 h-3.5 text-[var(--color-primary)]" />
@@ -642,7 +558,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      <section className="space-y-3" aria-labelledby="dashboard-products-title">
+      <section className="dashboard-products space-y-3" aria-labelledby="dashboard-products-title">
         <div className="flex items-center justify-between gap-3 px-1"><h3 id="dashboard-products-title" className="text-xs font-bold flex items-center gap-2"><PackagePlus size={16} className="text-[var(--color-primary)]"/>{language === 'lo' ? 'ສິນຄ້າໃໝ່ຫຼ້າສຸດ' : 'Latest New Products'}</h3><button onClick={()=>handleCardClick('newProducts')} className="text-xs font-bold text-[var(--color-primary)]">{language === 'lo' ? 'ທັງໝົດ' : 'View all'}</button></div>
         <div className="grid sm:grid-cols-2 gap-3">
           {newProducts.length === 0 && <p className="calm-card rounded-2xl p-6 text-sm text-[var(--color-text-secondary)] sm:col-span-2">{language === 'lo' ? 'ຍັງບໍ່ມີສິນຄ້າໃໝ່. ເມື່ອເພີ່ມແລ້ວ ຮູບຈະສະແດງຢູ່ນີ້.' : 'No new products yet. Added products will appear here with their images.'}</p>}
@@ -664,7 +580,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           triggerHaptic('light');
           onNavigateTab('newProducts');
         }}
-        className="calm-card p-4 rounded-3xl border border-emerald-500/30 bg-emerald-500/5 hover:border-[var(--color-primary)] cursor-pointer transition flex items-center justify-between gap-3 shadow-2xs"
+        className="dashboard-npd-banner calm-card p-4 rounded-3xl border border-emerald-500/30 bg-emerald-500/5 hover:border-[var(--color-primary)] cursor-pointer transition flex items-center justify-between gap-3 shadow-2xs"
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary)] text-white flex items-center justify-center shrink-0 shadow-2xs">
