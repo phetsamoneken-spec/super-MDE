@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 const root = fileURLToPath(new URL('../', import.meta.url));
 import data from '../src/data/outletDataset.json';
 const scaffold = `CREATE ROLE authenticated; CREATE ROLE anon;
-CREATE SCHEMA auth; CREATE TABLE auth.users(id UUID PRIMARY KEY, email TEXT);
+CREATE SCHEMA auth; CREATE TABLE auth.users(id UUID PRIMARY KEY, email TEXT, email_confirmed_at TIMESTAMPTZ);
 CREATE FUNCTION auth.uid() RETURNS UUID LANGUAGE SQL STABLE AS $$ SELECT NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 CREATE SCHEMA storage; CREATE TABLE storage.buckets(id TEXT PRIMARY KEY,name TEXT,public BOOLEAN,file_size_limit BIGINT,allowed_mime_types TEXT[]);
 CREATE TABLE storage.objects(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),bucket_id TEXT,name TEXT,owner UUID);
@@ -32,7 +32,28 @@ await db.query("INSERT INTO public.profiles(id,email,full_name,role,mde_id) VALU
 await db.exec('GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;');
 async function asUser(user: string){await db.exec('RESET ROLE');await db.query("SELECT set_config('request.jwt.claim.sub',$1,false)",[user]);await db.exec('SET ROLE authenticated');}
 await asUser(ids[0]);assert.equal((await db.query<{ n: number }>('SELECT count(*)::int AS n FROM public.outlet_directory')).rows[0].n,1178);
-await asUser(ids[1]);const count=data.outlets.filter(o=>o.mdeId===data.mdes[0].id).length;assert.equal((await db.query<{ n: number }>('SELECT count(*)::int AS n FROM public.outlet_directory')).rows[0].n,count);
+// The actual browser RPC must persist, enforce versions, and roll back batches.
+const category = crypto.randomUUID();
+const apply = (changes: unknown[]) => db.query('SELECT public.app_apply_changes($1::jsonb)', [JSON.stringify(changes)]);
+await apply([{table:'sub_channels',operation:'upsert',rows:[{id:category,name:'RPC verification',channel_id:existingChannelId}]}]);
+const version=(await db.query<{updated_at:string}>('SELECT updated_at::text FROM public.sub_channels WHERE id=$1',[category])).rows[0].updated_at;
+await apply([{table:'sub_channels',operation:'upsert',rows:[{id:category,name:'RPC updated',channel_id:existingChannelId}],expected:{[category]:version}}]);
+await assert.rejects(()=>apply([{table:'sub_channels',operation:'delete',ids:[category],expected:{[category]:'2000-01-01T00:00:00Z'}}]), /changed on another device/);
+await assert.rejects(()=>apply([{table:'sub_channels',operation:'upsert',rows:[{id:category,name:'Must roll back',channel_id:existingChannelId}]},{table:'app_admin_allowlist',operation:'delete',ids:[category]}]), /Unsupported table/);
+assert.equal((await db.query<{name:string}>('SELECT name FROM public.sub_channels WHERE id=$1',[category])).rows[0].name,'RPC updated');
+await apply([{table:'sub_channels',operation:'delete',ids:[category]}]);
+const launchId=crypto.randomUUID(), orderId=crypto.randomUUID(), taskId=crypto.randomUUID();
+const ownOutlet=data.outlets.find(o=>o.mdeId===data.mdes[0].id)!;
+await apply([{table:'new_products',operation:'upsert',rows:[{id:launchId,product_name:'Test launch',sku:'test',category:'test',launch_date:'2026-11-07',pack_size:'1',unit_price:1,target_distribution_rate:50,target_units_per_store:1,status:'Active',created_by:ids[0]}]},
+{table:'new_product_store_orders',operation:'upsert',rows:[{id:orderId,product_id:launchId,store_id:ownOutlet.id,order_status:'Not Ordered'}]},
+{table:'follow_up_tasks',operation:'upsert',rows:[{id:taskId,store_id:ownOutlet.id,mde_id:data.mdes[0].id,task_title:'Test task',due_date:'2026-11-07',priority:'Medium',task_status:'Pending'}]}]);
+await asUser(ids[1]);
+await apply([{table:'new_product_store_orders',operation:'upsert',rows:[{id:orderId,product_id:launchId,store_id:ownOutlet.id,order_status:'Ordered',updated_by:ids[1]}]},
+{table:'follow_up_tasks',operation:'upsert',rows:[{id:taskId,store_id:ownOutlet.id,mde_id:data.mdes[0].id,task_title:'Test task',due_date:'2026-11-07',priority:'Medium',task_status:'Completed'}]}]);
+assert.equal((await db.query<{order_status:string}>('SELECT order_status FROM public.new_product_store_orders WHERE id=$1',[orderId])).rows[0].order_status,'Ordered');
+assert.equal((await db.query<{task_status:string}>('SELECT task_status FROM public.follow_up_tasks WHERE id=$1',[taskId])).rows[0].task_status,'Completed');
+await assert.rejects(()=>apply([{table:'sub_channels',operation:'upsert',rows:[{id:category,name:'Forbidden',channel_id:existingChannelId}]}]), /row-level security/);
+const count=data.outlets.filter(o=>o.mdeId===data.mdes[0].id).length;assert.equal((await db.query<{ n: number }>('SELECT count(*)::int AS n FROM public.outlet_directory')).rows[0].n,count);
 assert.equal((await db.query("UPDATE public.stores SET store_name='not allowed' RETURNING id")).rows.length,0);
 await assert.rejects(() => db.query('UPDATE public.profiles SET mde_id=$1 WHERE id=$2', [data.mdes[1].id, ids[1]]), /row-level security/);
 await assert.rejects(() => db.query("UPDATE public.profiles SET role='admin' WHERE id=$1", [ids[1]]), /row-level security/);
@@ -41,6 +62,14 @@ await assert.rejects(()=>db.query("INSERT INTO public.mdes(name) VALUES ('not al
 await asUser(ids[2]);assert.equal((await db.query<{ n: number }>('SELECT count(*)::int AS n FROM public.outlet_directory')).rows[0].n,0);
 await db.exec('RESET ROLE; SET ROLE anon;');assert.equal((await db.query<{ n: number }>('SELECT count(*)::int AS n FROM public.outlet_directory')).rows[0].n,0);
 console.log('PASS: Admin sees all; assigned MDE sees '+count+'; unassigned and anonymous see zero; sales cannot modify outlets or MDEs');
+await db.exec('RESET ROLE;');
+await db.query('INSERT INTO public.app_admin_allowlist(email) VALUES ($1)', ['test-2@example.test']);
+await asUser(ids[2]);
+await assert.rejects(()=>db.query('SELECT public.ensure_my_profile()'), /verified account/);
+await db.exec('RESET ROLE');
+await db.query('UPDATE auth.users SET email_confirmed_at=now() WHERE id=$1',[ids[2]]);
+await asUser(ids[2]); await db.query('SELECT public.ensure_my_profile()');
+assert.equal((await db.query<{role:string}>('SELECT role FROM public.profiles WHERE id=$1',[ids[2]])).rows[0].role,'admin');
 await db.exec('RESET ROLE;');
 await assert.rejects(()=>db.query('DELETE FROM public.sub_channels WHERE id=$1',[data.outlets[0].subChannelId]),/foreign key/);
 console.log('PASS: referenced Sub-channel cannot be deleted');

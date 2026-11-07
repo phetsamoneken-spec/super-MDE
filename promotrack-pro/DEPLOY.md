@@ -8,8 +8,7 @@ The `Deploy PromoTrack to GitHub Pages` workflow runs when this directory or its
 workflow changes on `main`, and can also be run manually in Actions.
 
 The workflow installs `bun.lock` with Bun 1.4.4, runs app/database tests and the TypeScript check, builds
-with the Pages base path, and deploys `dist`. No backend credentials are required
-for the existing localStorage demo. The expected project URL is
+with the Pages base path, and deploys `dist`. Only the project URL and browser publishable key are bundled. Management tokens and service-role keys must never be included. The expected project URL is
 https://phetsamoneken-spec.github.io/bundo/ after a successful deployment.
 
 Local validation:
@@ -24,13 +23,15 @@ npm run build -- --base=/bundo/
 Manifest icons, service worker scope, offline navigation fallback, and the Excel
 template use the deployment base path. Service worker registration also works
 when React initializes after the page load event. No existing app feature is
-removed. Live Supabase synchronization is not connected.
+removed. Supabase Auth and atomic RLS-enforced synchronization are enabled by default.
 
 The initial business dataset comes only from the owner's `data/outlet.xlsx`:
-1,178 outlets and seven MDEs, with a separate local Admin persona. The owner
+1,178 outlets and seven MDEs, with a separate verified Admin account. The owner
 authorized publication in this public static app. Builds generate the dataset
 and SQL files, but do not apply migrations to Supabase. See `supabase/README.md`
 for the exact schema and requirements for applying it to a remote project.
 
 The workflow publishes PromoTrack as this repository's Pages site. It does not
 delete the preserved POS source at the repository root.
+
+Before account activation, set Supabase Authentication → URL Configuration Site URL to `https://phetsamoneken-spec.github.io/bundo/` and allow the same Redirect URL. The management token available during setup lacked Auth configuration permissions, so this Dashboard step remains manual. The owner creates their account using the designated Admin email, chooses their own password and confirms the email. No invitation is sent by deployment.

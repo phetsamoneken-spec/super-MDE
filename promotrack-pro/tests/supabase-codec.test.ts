@@ -1,0 +1,31 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { entities, decodeRow, encodeRow, buildChanges } from '../src/services/supabaseCodec';
+import type { AppData } from '../src/services/appState';
+const empty = () => Object.fromEntries(entities.map(e => [e.key, []])) as unknown as AppData;
+test('connected codec keeps business MDE assignments separate from Auth foreign keys', () => {
+  const stores = entities.find(e => e.key === 'stores')!;
+  const tasks = entities.find(e => e.key === 'tasks')!;
+  const ids = new Set(['mde-reference']);
+  const outlet = encodeRow(stores, { id:'outlet', assignedSalesUser:'mde-reference',mdeId:'mde-reference',province:'ວຽງຈັນ' }, ids);
+  assert.equal(outlet.assigned_sales_user,null);
+  assert.equal(outlet.mde_id,'mde-reference');
+  assert.equal(decodeRow(stores,outlet).assignedSalesUser,'mde-reference');
+  const task = encodeRow(tasks,{id:'task',assignedUser:'mde-reference'},ids);
+  assert.equal(task.assigned_user,null);
+  assert.equal(task.mde_id,'mde-reference');
+  assert.equal(decodeRow(tasks,task).assignedUser,'mde-reference');
+});
+test('connected changes ignore server timestamps and delete children before parents', () => {
+  const before = empty(), after = empty();
+  before.newProducts=[{id:'product',productName:'A',createdAt:'old'} as any];
+  before.newProductStoreOrders=[{id:'order',productId:'product'} as any];
+  const changes=buildChanges(before,after,{new_products:{product:'version'}},[]);
+  assert.deepEqual(changes.map(c=>c.table),['new_product_store_orders','new_products']);
+  assert.deepEqual(changes[1].expected,{product:'version'});
+  const same=structuredClone(before);same.newProducts[0].createdAt='new';
+  assert.deepEqual(buildChanges(before,same,{},[]),[]);
+  same.newProducts[0].productName='B';
+  const row=buildChanges(before,same,{},[])[0].rows![0];
+  assert.equal(row.product_name,'B'); assert.equal('created_at' in row,false);
+});

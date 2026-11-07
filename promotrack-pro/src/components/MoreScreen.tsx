@@ -30,6 +30,7 @@ import { usePWAInstall } from '../hooks/usePWAInstall';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 interface MoreScreenProps {
+  connected?: boolean;
   currentUser: UserProfile;
   appBranding: AppBranding;
   language: Language;
@@ -46,6 +47,7 @@ interface MoreScreenProps {
 }
 
 export const MoreScreen: React.FC<MoreScreenProps> = ({
+  connected,
   currentUser,
   appBranding,
   language,
@@ -293,10 +295,10 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
             </div>
             <div>
               <h4 className="text-xs font-bold text-[var(--color-text-primary)]">
-                {language === 'lo' ? 'ປ່ຽນບັນຊີທົດລອງ (Switch Persona)' : 'Switch User Role / Persona'}
+                {connected ? (language === 'lo' ? 'ບັນຊີ' : 'Account') : (language === 'lo' ? 'ປ່ຽນບັນຊີທົດລອງ (Switch Persona)' : 'Switch User Role / Persona')}
               </h4>
               <p className="text-[11px] text-[var(--color-text-secondary)]">
-                Test Admin vs Sales Rep RLS scoping
+                {connected ? currentUser.email : 'Test Admin vs Sales Rep RLS scoping'}
               </p>
             </div>
           </div>

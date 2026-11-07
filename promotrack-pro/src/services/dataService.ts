@@ -33,6 +33,7 @@ import {
 } from './workbookData';
 import { DATASET_VERSION, OUTLET_DATASET } from './workbookData';
 import * as XLSX from 'xlsx';
+import { stateStorageKeys, type AppData } from './appState';
 
 // A separate namespace activates only the supplied workbook. Old browser data
 // remains recoverable under its old keys and is never mixed into this dataset.
@@ -67,6 +68,52 @@ const DEFAULT_BRANDING: AppBranding = {
 
 class DataService {
   private listeners: Set<() => void> = new Set();
+  private remoteContext: { userId: string; mdes: UserProfile[] } | null = null;
+
+  public bindRemote(project: string, userId: string) {
+    this.remoteContext = { userId, mdes: [] };
+    this.remoteMemory.clear();
+    for (const key of [...Object.values(stateStorageKeys), 'CURRENT_USER', 'OFFLINE_DRAFTS'] as const) {
+      STORAGE_KEYS[key] = `promotrack_supabase_${project}_${userId}_${key.toLowerCase()}`;
+    }
+    try { this.remoteContext.mdes = JSON.parse(this.readStored(STORAGE_KEYS.USERS + '_mdes') || '[]'); } catch { /* no cached references */ }
+  }
+
+  public exportState(): AppData {
+    return Object.fromEntries(Object.entries(stateStorageKeys).map(([name, key]) => [name, JSON.parse(this.readStored(STORAGE_KEYS[key]) || '[]')])) as unknown as AppData;
+  }
+
+  public replaceRemoteState(state: AppData, user: UserProfile, mdes: UserProfile[]) {
+    if (!this.remoteContext || user.id !== this.remoteContext.userId) throw new Error('Account mismatch');
+    for (const [name, key] of Object.entries(stateStorageKeys)) this.writeStored(STORAGE_KEYS[key], JSON.stringify(state[name as keyof AppData]));
+    this.writeStored(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    this.writeStored(STORAGE_KEYS.USERS + '_mdes', JSON.stringify(mdes));
+    this.remoteContext.mdes = mdes;
+    this.notify();
+  }
+
+  public getAccountProfiles(): UserProfile[] {
+    if (this.remoteContext) return JSON.parse(this.readStored(STORAGE_KEYS.USERS) || '[]');
+    return this.getAllUsers();
+  }
+
+  private isOwnAssignment(id: string) {
+    const user = this.getCurrentUser();
+    return id === user.id || (!!user.mdeId && id === user.mdeId);
+  }
+
+  private remoteMemory = new Map<string, string>();
+  private isRemoteDataKey(key: string) {
+    return !!this.remoteContext && (key === STORAGE_KEYS.CURRENT_USER || Object.values(stateStorageKeys).some((name) => STORAGE_KEYS[name] === key));
+  }
+  private readStored(key: string) {
+    if (this.isRemoteDataKey(key)) return this.remoteMemory.get(key) ?? (key === STORAGE_KEYS.CURRENT_USER ? null : '[]');
+    return localStorage.getItem(key);
+  }
+  private writeStored(key: string, value: string) {
+    if (this.isRemoteDataKey(key)) this.remoteMemory.set(key, value);
+    else localStorage.setItem(key, value);
+  }
 
   constructor() {
     this.initStorage();
@@ -75,45 +122,45 @@ class DataService {
   private initStorage() {
     if (typeof window === 'undefined') return;
 
-    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+    if (!this.readStored(STORAGE_KEYS.USERS)) {
+      this.writeStored(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.CURRENT_USER)) {
+    if (!this.readStored(STORAGE_KEYS.CURRENT_USER)) {
       // Default persona: Admin
-      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(INITIAL_USERS[0]));
+      this.writeStored(STORAGE_KEYS.CURRENT_USER, JSON.stringify(INITIAL_USERS[0]));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.CHANNELS)) {
-      localStorage.setItem(STORAGE_KEYS.CHANNELS, JSON.stringify(INITIAL_CHANNELS));
+    if (!this.readStored(STORAGE_KEYS.CHANNELS)) {
+      this.writeStored(STORAGE_KEYS.CHANNELS, JSON.stringify(INITIAL_CHANNELS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.SUB_CHANNELS)) {
-      localStorage.setItem(STORAGE_KEYS.SUB_CHANNELS, JSON.stringify(INITIAL_SUB_CHANNELS));
+    if (!this.readStored(STORAGE_KEYS.SUB_CHANNELS)) {
+      this.writeStored(STORAGE_KEYS.SUB_CHANNELS, JSON.stringify(INITIAL_SUB_CHANNELS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.STORES)) {
-      localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify(INITIAL_STORES));
+    if (!this.readStored(STORAGE_KEYS.STORES)) {
+      this.writeStored(STORAGE_KEYS.STORES, JSON.stringify(INITIAL_STORES));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.PROMOTIONS)) {
-      localStorage.setItem(STORAGE_KEYS.PROMOTIONS, JSON.stringify(INITIAL_PROMOTIONS));
+    if (!this.readStored(STORAGE_KEYS.PROMOTIONS)) {
+      this.writeStored(STORAGE_KEYS.PROMOTIONS, JSON.stringify(INITIAL_PROMOTIONS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.PROMOTION_STORES)) {
-      localStorage.setItem(STORAGE_KEYS.PROMOTION_STORES, JSON.stringify(INITIAL_PROMOTION_STORES));
+    if (!this.readStored(STORAGE_KEYS.PROMOTION_STORES)) {
+      this.writeStored(STORAGE_KEYS.PROMOTION_STORES, JSON.stringify(INITIAL_PROMOTION_STORES));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.NEW_PRODUCTS)) {
-      localStorage.setItem(STORAGE_KEYS.NEW_PRODUCTS, JSON.stringify(INITIAL_NEW_PRODUCTS));
+    if (!this.readStored(STORAGE_KEYS.NEW_PRODUCTS)) {
+      this.writeStored(STORAGE_KEYS.NEW_PRODUCTS, JSON.stringify(INITIAL_NEW_PRODUCTS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS)) {
-      localStorage.setItem(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(INITIAL_NEW_PRODUCT_STORE_ORDERS));
+    if (!this.readStored(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS)) {
+      this.writeStored(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(INITIAL_NEW_PRODUCT_STORE_ORDERS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.TASKS)) {
-      localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(INITIAL_TASKS));
+    if (!this.readStored(STORAGE_KEYS.TASKS)) {
+      this.writeStored(STORAGE_KEYS.TASKS, JSON.stringify(INITIAL_TASKS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)) {
-      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_AUDIT_LOGS));
+    if (!this.readStored(STORAGE_KEYS.AUDIT_LOGS)) {
+      this.writeStored(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_AUDIT_LOGS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.OFFLINE_DRAFTS)) {
-      localStorage.setItem(STORAGE_KEYS.OFFLINE_DRAFTS, JSON.stringify([]));
+    if (!this.readStored(STORAGE_KEYS.OFFLINE_DRAFTS)) {
+      this.writeStored(STORAGE_KEYS.OFFLINE_DRAFTS, JSON.stringify([]));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.APP_BRANDING)) {
-      localStorage.setItem(STORAGE_KEYS.APP_BRANDING, JSON.stringify(DEFAULT_BRANDING));
+    if (!this.readStored(STORAGE_KEYS.APP_BRANDING)) {
+      this.writeStored(STORAGE_KEYS.APP_BRANDING, JSON.stringify(DEFAULT_BRANDING));
     }
   }
 
@@ -137,7 +184,7 @@ class DataService {
   // --- App Branding & Logo Customization ---
   public getAppBranding(): AppBranding {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.APP_BRANDING);
+      const stored = this.readStored(STORAGE_KEYS.APP_BRANDING);
       if (stored) return { ...DEFAULT_BRANDING, ...JSON.parse(stored) };
     } catch {
       // fallback
@@ -148,13 +195,13 @@ class DataService {
   public updateAppBranding(updates: Partial<AppBranding>): AppBranding {
     const current = this.getAppBranding();
     const updated = { ...current, ...updates };
-    localStorage.setItem(STORAGE_KEYS.APP_BRANDING, JSON.stringify(updated));
+    this.writeStored(STORAGE_KEYS.APP_BRANDING, JSON.stringify(updated));
     this.notify();
     return updated;
   }
 
   public resetAppBranding(): AppBranding {
-    localStorage.setItem(STORAGE_KEYS.APP_BRANDING, JSON.stringify(DEFAULT_BRANDING));
+    this.writeStored(STORAGE_KEYS.APP_BRANDING, JSON.stringify(DEFAULT_BRANDING));
     this.notify();
     return DEFAULT_BRANDING;
   }
@@ -162,7 +209,7 @@ class DataService {
   // --- Auth & Users ---
   public getCurrentUser(): UserProfile {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+      const stored = this.readStored(STORAGE_KEYS.CURRENT_USER);
       if (stored) return JSON.parse(stored);
     } catch {
       // ignore
@@ -171,13 +218,15 @@ class DataService {
   }
 
   public setCurrentUser(user: UserProfile) {
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    if (this.remoteContext && user.id !== this.remoteContext.userId) throw new Error('Sign in to change accounts.');
+    this.writeStored(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
     this.notify();
   }
 
   public getAllUsers(): UserProfile[] {
+    if (this.remoteContext) return [...this.getAccountProfiles(), ...this.remoteContext.mdes];
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.USERS);
+      const stored = this.readStored(STORAGE_KEYS.USERS);
       return stored ? JSON.parse(stored) : INITIAL_USERS;
     } catch {
       return INITIAL_USERS;
@@ -185,6 +234,7 @@ class DataService {
   }
 
   public getSalesReps(): UserProfile[] {
+    if (this.remoteContext) return this.remoteContext.mdes;
     return this.getAllUsers().filter((u) => u.role === 'sales' || u.mdeId);
   }
 
@@ -203,6 +253,7 @@ class DataService {
   }
 
   public addUser(userData: Omit<UserProfile, 'id'>): { success: boolean; error?: string; user?: UserProfile } {
+    if (this.remoteContext) return { success: false, error: 'New users must register through Supabase sign-in.' };
     const allUsers = this.getAllUsers();
     const cleanEmail = userData.email.trim().toLowerCase();
 
@@ -213,18 +264,18 @@ class DataService {
     const newUser: UserProfile = {
       ...userData,
       email: cleanEmail,
-      id: `u-${userData.role}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       avatarUrl: userData.avatarUrl || ''
     };
 
     allUsers.push(newUser);
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(allUsers));
+    this.writeStored(STORAGE_KEYS.USERS, JSON.stringify(allUsers));
     this.notify();
     return { success: true, user: newUser };
   }
 
   public updateUser(userId: string, updates: Partial<UserProfile>): { success: boolean; error?: string } {
-    const allUsers = this.getAllUsers();
+    const allUsers = this.getAccountProfiles();
     const index = allUsers.findIndex((u) => u.id === userId);
     if (index === -1) {
       return { success: false, error: 'User not found.' };
@@ -243,7 +294,7 @@ class DataService {
       ...updates
     };
 
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(allUsers));
+    this.writeStored(STORAGE_KEYS.USERS, JSON.stringify(allUsers));
 
     // If updating currently logged in user, keep session in sync
     const currentUser = this.getCurrentUser();
@@ -261,14 +312,14 @@ class DataService {
       return { success: false, error: 'Cannot delete the account you are currently logged in with.' };
     }
 
-    const allUsers = this.getAllUsers();
+    const allUsers = this.getAccountProfiles();
     const userToDelete = allUsers.find((u) => u.id === userId);
     if (!userToDelete) {
       return { success: false, error: 'User not found.' };
     }
 
     const filtered = allUsers.filter((u) => u.id !== userId);
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(filtered));
+    this.writeStored(STORAGE_KEYS.USERS, JSON.stringify(filtered));
 
     // Reassign any stores assigned to this deleted user to the current admin
     try {
@@ -281,7 +332,7 @@ class DataService {
         }
       });
       if (storesChanged) {
-        localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify(allStores));
+        this.writeStored(STORAGE_KEYS.STORES, JSON.stringify(allStores));
       }
     } catch {
       // ignore
@@ -294,7 +345,7 @@ class DataService {
   // --- Theme Color Customization ---
   public getThemeColor(): string {
     try {
-      const saved = localStorage.getItem(STORAGE_KEYS.THEME_COLOR);
+      const saved = this.readStored(STORAGE_KEYS.THEME_COLOR);
       if (saved) return saved;
     } catch {
       // fallback
@@ -303,14 +354,14 @@ class DataService {
   }
 
   public setThemeColor(colorId: string) {
-    localStorage.setItem(STORAGE_KEYS.THEME_COLOR, colorId);
+    this.writeStored(STORAGE_KEYS.THEME_COLOR, colorId);
     this.notify();
   }
 
   // --- Channels ---
   public getChannels(): Channel[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.CHANNELS);
+      const stored = this.readStored(STORAGE_KEYS.CHANNELS);
       return stored ? JSON.parse(stored) : INITIAL_CHANNELS;
     } catch {
       return INITIAL_CHANNELS;
@@ -319,7 +370,7 @@ class DataService {
 
   public getSubChannels(): SubChannel[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.SUB_CHANNELS);
+      const stored = this.readStored(STORAGE_KEYS.SUB_CHANNELS);
       return stored ? JSON.parse(stored) : INITIAL_SUB_CHANNELS;
     } catch {
       return INITIAL_SUB_CHANNELS;
@@ -336,7 +387,7 @@ class DataService {
       return { success: false, error: 'duplicate_name' };
     }
     const subChannel: SubChannel = { ...input, name, description: input.description?.trim(), id: crypto.randomUUID() };
-    localStorage.setItem(STORAGE_KEYS.SUB_CHANNELS, JSON.stringify([...list, subChannel]));
+    this.writeStored(STORAGE_KEYS.SUB_CHANNELS, JSON.stringify([...list, subChannel]));
     this.notify();
     return { success: true, subChannel };
   }
@@ -357,7 +408,7 @@ class DataService {
     if (!list.some((item) => item.id === id)) return { success: false, error: 'not_found' };
     const usage = this.getSubChannelUsage(id);
     if (usage.stores || usage.promotions || usage.products) return { success: false, error: 'in_use' };
-    localStorage.setItem(STORAGE_KEYS.SUB_CHANNELS, JSON.stringify(list.filter((item) => item.id !== id)));
+    this.writeStored(STORAGE_KEYS.SUB_CHANNELS, JSON.stringify(list.filter((item) => item.id !== id)));
     this.notify();
     return { success: true };
   }
@@ -365,13 +416,13 @@ class DataService {
   // --- Stores ---
   public getStores(): Store[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.STORES);
+      const stored = this.readStored(STORAGE_KEYS.STORES);
       const allStores: Store[] = stored ? JSON.parse(stored) : INITIAL_STORES;
       const currentUser = this.getCurrentUser();
 
       // Enforce RLS: Sales Rep only views stores assigned to them
       if (currentUser.role === 'sales') {
-        return allStores.filter((s) => s.assignedSalesUser === currentUser.id);
+        return allStores.filter((s) => this.isOwnAssignment(s.assignedSalesUser));
       }
       return allStores;
     } catch {
@@ -381,7 +432,7 @@ class DataService {
 
   public getAllStoresUnfiltered(): Store[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.STORES);
+      const stored = this.readStored(STORAGE_KEYS.STORES);
       return stored ? JSON.parse(stored) : INITIAL_STORES;
     } catch {
       return INITIAL_STORES;
@@ -417,7 +468,7 @@ class DataService {
     });
 
     allStores.unshift(newStore);
-    localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify(allStores));
+    this.writeStored(STORAGE_KEYS.STORES, JSON.stringify(allStores));
     this.recordDraft('store', 'create', newStore);
     this.notify();
 
@@ -446,7 +497,7 @@ class DataService {
       updatedAt: new Date().toISOString()
     });
 
-    localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify(allStores));
+    this.writeStored(STORAGE_KEYS.STORES, JSON.stringify(allStores));
     this.recordDraft('store', 'update', allStores[index]);
     this.notify();
 
@@ -462,12 +513,12 @@ class DataService {
 
     // Filter store out
     const filtered = allStores.filter((s) => s.id !== storeId);
-    localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify(filtered));
+    this.writeStored(STORAGE_KEYS.STORES, JSON.stringify(filtered));
 
     // Clean up associated promotion_stores records
     try {
       const promoStores = this.getAllPromotionStoresUnfiltered().filter((ps) => ps.storeId !== storeId);
-      localStorage.setItem(STORAGE_KEYS.PROMOTION_STORES, JSON.stringify(promoStores));
+      this.writeStored(STORAGE_KEYS.PROMOTION_STORES, JSON.stringify(promoStores));
     } catch {
       // ignore
     }
@@ -475,7 +526,7 @@ class DataService {
     // Clean up associated new product store orders
     try {
       const npOrders = this.getAllNewProductStoreOrdersUnfiltered().filter((o) => o.storeId !== storeId);
-      localStorage.setItem(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(npOrders));
+      this.writeStored(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(npOrders));
     } catch {
       // ignore
     }
@@ -483,7 +534,7 @@ class DataService {
     // Clean up associated tasks
     try {
       const tasks = this.getAllTasksUnfiltered().filter((t) => t.storeId !== storeId);
-      localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
+      this.writeStored(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
     } catch {
       // ignore
     }
@@ -497,7 +548,7 @@ class DataService {
   // --- Promotions ---
   public getPromotions(): Promotion[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.PROMOTIONS);
+      const stored = this.readStored(STORAGE_KEYS.PROMOTIONS);
       const allPromos: Promotion[] = stored ? JSON.parse(stored) : INITIAL_PROMOTIONS;
       const currentUser = this.getCurrentUser();
 
@@ -513,7 +564,7 @@ class DataService {
 
   public getAllPromotionsUnfiltered(): Promotion[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.PROMOTIONS);
+      const stored = this.readStored(STORAGE_KEYS.PROMOTIONS);
       return stored ? JSON.parse(stored) : INITIAL_PROMOTIONS;
     } catch {
       return INITIAL_PROMOTIONS;
@@ -529,14 +580,14 @@ class DataService {
     const allPromos = this.getAllPromotionsUnfiltered();
     const newPromo: Promotion = {
       ...promoData,
-      id: `prm-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       createdBy: currentUser.id,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     allPromos.unshift(newPromo);
-    localStorage.setItem(STORAGE_KEYS.PROMOTIONS, JSON.stringify(allPromos));
+    this.writeStored(STORAGE_KEYS.PROMOTIONS, JSON.stringify(allPromos));
     this.recordDraft('promotion', 'create', newPromo);
 
     // Auto-assign stores for selected target Sub-Channels if provided
@@ -573,7 +624,7 @@ class DataService {
       updatedAt: new Date().toISOString()
     };
 
-    localStorage.setItem(STORAGE_KEYS.PROMOTIONS, JSON.stringify(allPromos));
+    this.writeStored(STORAGE_KEYS.PROMOTIONS, JSON.stringify(allPromos));
     this.recordDraft('promotion', 'update', allPromos[index]);
 
     // Auto-assign stores if targetSubChannels were updated
@@ -605,15 +656,15 @@ class DataService {
     }
 
     const deleted = allPromos.splice(index, 1)[0];
-    localStorage.setItem(STORAGE_KEYS.PROMOTIONS, JSON.stringify(allPromos));
+    this.writeStored(STORAGE_KEYS.PROMOTIONS, JSON.stringify(allPromos));
 
     // Also remove promotion stores associated with this promotion
     try {
-      const storedPS = localStorage.getItem(STORAGE_KEYS.PROMOTION_STORES);
+      const storedPS = this.readStored(STORAGE_KEYS.PROMOTION_STORES);
       if (storedPS) {
         const pStores: PromotionStore[] = JSON.parse(storedPS);
         const filteredPS = pStores.filter((ps) => ps.promotionId !== promoId);
-        localStorage.setItem(STORAGE_KEYS.PROMOTION_STORES, JSON.stringify(filteredPS));
+        this.writeStored(STORAGE_KEYS.PROMOTION_STORES, JSON.stringify(filteredPS));
       }
     } catch {
       // ignore
@@ -628,7 +679,7 @@ class DataService {
   // --- Promotion Stores (Order Tracking) ---
   public getPromotionStores(promotionId?: string): PromotionStore[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.PROMOTION_STORES);
+      const stored = this.readStored(STORAGE_KEYS.PROMOTION_STORES);
       let list: PromotionStore[] = stored ? JSON.parse(stored) : INITIAL_PROMOTION_STORES;
 
       if (promotionId) {
@@ -650,7 +701,7 @@ class DataService {
 
   public getAllPromotionStoresUnfiltered(): PromotionStore[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.PROMOTION_STORES);
+      const stored = this.readStored(STORAGE_KEYS.PROMOTION_STORES);
       return stored ? JSON.parse(stored) : INITIAL_PROMOTION_STORES;
     } catch {
       return INITIAL_PROMOTION_STORES;
@@ -670,7 +721,7 @@ class DataService {
     storeIds.forEach((sid) => {
       if (!existingStoreIds.has(sid)) {
         const newRecord: PromotionStore = {
-          id: `ps-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+          id: crypto.randomUUID(),
           storeId: sid,
           promotionId,
           orderStatus: 'Not Ordered',
@@ -682,7 +733,7 @@ class DataService {
       }
     });
 
-    localStorage.setItem(STORAGE_KEYS.PROMOTION_STORES, JSON.stringify(allList));
+    this.writeStored(STORAGE_KEYS.PROMOTION_STORES, JSON.stringify(allList));
     this.notify();
     return { success: true, addedCount };
   }
@@ -713,7 +764,7 @@ class DataService {
 
     // RLS Permission check: Admin or assigned Sales user
     if (currentUser.role === 'sales') {
-      if (!store || store.assignedSalesUser !== currentUser.id) {
+      if (!store || !this.isOwnAssignment(store.assignedSalesUser)) {
         return { success: false, error: 'Unauthorized: You can only update orders for stores assigned to you.' };
       }
     }
@@ -733,7 +784,7 @@ class DataService {
       updatedAt: nowIso
     };
 
-    localStorage.setItem(STORAGE_KEYS.PROMOTION_STORES, JSON.stringify(allList));
+    this.writeStored(STORAGE_KEYS.PROMOTION_STORES, JSON.stringify(allList));
 
     // Append to Audit History
     this.appendAuditLog({
@@ -767,7 +818,7 @@ class DataService {
   // --- Audit Logs ---
   public getAuditLogs(storeId?: string, promotionId?: string): OrderStatusHistory[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
+      const stored = this.readStored(STORAGE_KEYS.AUDIT_LOGS);
       let list: OrderStatusHistory[] = stored ? JSON.parse(stored) : INITIAL_AUDIT_LOGS;
 
       if (storeId) list = list.filter((l) => l.storeId === storeId);
@@ -783,11 +834,11 @@ class DataService {
     const list = this.getAuditLogs();
     const newLog: OrderStatusHistory = {
       ...entry,
-      id: `aud-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString()
     };
     list.unshift(newLog);
-    localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(list));
+    this.writeStored(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(list));
   }
 
   // --- Sub-Channel Helper for batch store selection ---
@@ -810,7 +861,7 @@ class DataService {
   // --- New Product Launches (NPD) & Orders ---
   public getNewProducts(): NewProductLaunch[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.NEW_PRODUCTS);
+      const stored = this.readStored(STORAGE_KEYS.NEW_PRODUCTS);
       const all: NewProductLaunch[] = stored ? JSON.parse(stored) : INITIAL_NEW_PRODUCTS;
       const currentUser = this.getCurrentUser();
       if (currentUser.role === 'sales') {
@@ -824,7 +875,7 @@ class DataService {
 
   public getAllNewProductsUnfiltered(): NewProductLaunch[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.NEW_PRODUCTS);
+      const stored = this.readStored(STORAGE_KEYS.NEW_PRODUCTS);
       return stored ? JSON.parse(stored) : INITIAL_NEW_PRODUCTS;
     } catch {
       return INITIAL_NEW_PRODUCTS;
@@ -840,14 +891,14 @@ class DataService {
     const all = this.getAllNewProductsUnfiltered();
     const newProduct: NewProductLaunch = {
       ...productData,
-      id: `np-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       createdBy: currentUser.id,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     all.unshift(newProduct);
-    localStorage.setItem(STORAGE_KEYS.NEW_PRODUCTS, JSON.stringify(all));
+    this.writeStored(STORAGE_KEYS.NEW_PRODUCTS, JSON.stringify(all));
     this.recordDraft('promotion', 'create', newProduct);
     this.notify();
 
@@ -872,7 +923,7 @@ class DataService {
       updatedAt: new Date().toISOString()
     };
 
-    localStorage.setItem(STORAGE_KEYS.NEW_PRODUCTS, JSON.stringify(all));
+    this.writeStored(STORAGE_KEYS.NEW_PRODUCTS, JSON.stringify(all));
     this.recordDraft('promotion', 'update', all[index]);
     this.notify();
 
@@ -888,11 +939,11 @@ class DataService {
     const products = this.getAllNewProductsUnfiltered();
     if (!products.some((product) => product.id === productId)) return { success: false, error: 'Product not found.' };
     const all = products.filter((p) => p.id !== productId);
-    localStorage.setItem(STORAGE_KEYS.NEW_PRODUCTS, JSON.stringify(all));
+    this.writeStored(STORAGE_KEYS.NEW_PRODUCTS, JSON.stringify(all));
 
     // Also remove associated store orders
     const orders = this.getAllNewProductStoreOrdersUnfiltered().filter((o) => o.productId !== productId);
-    localStorage.setItem(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(orders));
+    this.writeStored(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(orders));
 
     this.notify();
     return { success: true };
@@ -900,7 +951,7 @@ class DataService {
 
   public getNewProductStoreOrders(productId?: string): NewProductStoreOrder[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS);
+      const stored = this.readStored(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS);
       let list: NewProductStoreOrder[] = stored ? JSON.parse(stored) : INITIAL_NEW_PRODUCT_STORE_ORDERS;
 
       if (productId) {
@@ -921,7 +972,7 @@ class DataService {
 
   public getAllNewProductStoreOrdersUnfiltered(): NewProductStoreOrder[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS);
+      const stored = this.readStored(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS);
       return stored ? JSON.parse(stored) : INITIAL_NEW_PRODUCT_STORE_ORDERS;
     } catch {
       return INITIAL_NEW_PRODUCT_STORE_ORDERS;
@@ -941,7 +992,7 @@ class DataService {
     storeIds.forEach((sid) => {
       if (!existingStoreIds.has(sid)) {
         const newRecord: NewProductStoreOrder = {
-          id: `npo-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+          id: crypto.randomUUID(),
           storeId: sid,
           productId,
           orderStatus: 'Not Ordered',
@@ -953,7 +1004,7 @@ class DataService {
       }
     });
 
-    localStorage.setItem(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(allList));
+    this.writeStored(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(allList));
     this.notify();
     return { success: true, addedCount };
   }
@@ -985,7 +1036,7 @@ class DataService {
 
     if (index === -1) {
       const newRecord: NewProductStoreOrder = {
-        id: `npo-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+        id: crypto.randomUUID(),
         productId: params.productId,
         storeId: params.storeId,
         orderStatus: params.newStatus,
@@ -1019,7 +1070,7 @@ class DataService {
       };
     }
 
-    localStorage.setItem(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(allList));
+    this.writeStored(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(allList));
 
     if (params.createAutoTask && (params.newStatus === 'Follow-up Required' || params.newStatus === 'Sample Provided')) {
       const store = this.getAllStoresUnfiltered().find((s) => s.id === params.storeId);
@@ -1045,13 +1096,13 @@ class DataService {
   // --- To-Do List (Tasks) ---
   public getTasks(): FollowUpTask[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.TASKS);
+      const stored = this.readStored(STORAGE_KEYS.TASKS);
       const allTasks: FollowUpTask[] = stored ? JSON.parse(stored) : INITIAL_TASKS;
       const currentUser = this.getCurrentUser();
 
       // Sales user only views tasks assigned to them
       if (currentUser.role === 'sales') {
-        return allTasks.filter((t) => t.assignedUser === currentUser.id);
+        return allTasks.filter((t) => this.isOwnAssignment(t.assignedUser));
       }
       return allTasks;
     } catch {
@@ -1061,7 +1112,7 @@ class DataService {
 
   public getAllTasksUnfiltered(): FollowUpTask[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.TASKS);
+      const stored = this.readStored(STORAGE_KEYS.TASKS);
       return stored ? JSON.parse(stored) : INITIAL_TASKS;
     } catch {
       return INITIAL_TASKS;
@@ -1072,13 +1123,13 @@ class DataService {
     const allTasks = this.getAllTasksUnfiltered();
     const newTask: FollowUpTask = {
       ...taskData,
-      id: `tsk-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     allTasks.unshift(newTask);
-    localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(allTasks));
+    this.writeStored(STORAGE_KEYS.TASKS, JSON.stringify(allTasks));
     this.recordDraft('task', 'create', newTask);
     this.notify();
 
@@ -1112,7 +1163,7 @@ class DataService {
       return { success: false, error: 'Task not found.' };
     }
 
-    if (currentUser.role === 'sales' && allTasks[index].assignedUser !== currentUser.id) {
+    if (currentUser.role === 'sales' && !this.isOwnAssignment(allTasks[index].assignedUser)) {
       return { success: false, error: 'Unauthorized: You can only update tasks assigned to you.' };
     }
 
@@ -1122,7 +1173,7 @@ class DataService {
       updatedAt: new Date().toISOString()
     };
 
-    localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(allTasks));
+    this.writeStored(STORAGE_KEYS.TASKS, JSON.stringify(allTasks));
     this.recordDraft('task', 'update', allTasks[index]);
     this.notify();
 
@@ -1136,12 +1187,12 @@ class DataService {
 
     if (!task) return { success: false, error: 'Task not found.' };
 
-    if (currentUser.role === 'sales' && task.assignedUser !== currentUser.id) {
+    if (currentUser.role === 'sales' && !this.isOwnAssignment(task.assignedUser)) {
       return { success: false, error: 'Unauthorized: You can only delete tasks assigned to you.' };
     }
 
     const filtered = allTasks.filter((t) => t.id !== taskId);
-    localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(filtered));
+    this.writeStored(STORAGE_KEYS.TASKS, JSON.stringify(filtered));
     this.recordDraft('task', 'delete', { id: taskId });
     this.notify();
 
@@ -1151,7 +1202,7 @@ class DataService {
   // --- Offline Drafts Queue ---
   public getOfflineDrafts(): OfflineDraft[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.OFFLINE_DRAFTS);
+      const stored = this.readStored(STORAGE_KEYS.OFFLINE_DRAFTS);
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -1159,6 +1210,7 @@ class DataService {
   }
 
   private recordDraft(entityType: OfflineDraft['entityType'], action: OfflineDraft['action'], payload: any) {
+    if (this.remoteContext) return; // SupabaseSync persists recoverable offline snapshots.
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       const drafts = this.getOfflineDrafts();
       drafts.push({
@@ -1169,12 +1221,12 @@ class DataService {
         timestamp: new Date().toISOString(),
         synced: false
       });
-      localStorage.setItem(STORAGE_KEYS.OFFLINE_DRAFTS, JSON.stringify(drafts));
+      this.writeStored(STORAGE_KEYS.OFFLINE_DRAFTS, JSON.stringify(drafts));
     }
   }
 
   public clearSyncedDrafts() {
-    localStorage.setItem(STORAGE_KEYS.OFFLINE_DRAFTS, JSON.stringify([]));
+    this.writeStored(STORAGE_KEYS.OFFLINE_DRAFTS, JSON.stringify([]));
     this.notify();
   }
 
@@ -1372,7 +1424,7 @@ class DataService {
       }
     });
 
-    localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify(allStores));
+    this.writeStored(STORAGE_KEYS.STORES, JSON.stringify(allStores));
     this.notify();
 
     return { success: true, importedCount, updatedCount, skippedCount };

@@ -23,6 +23,7 @@ import { triggerHaptic } from '../utils/haptics';
 export type NavTab = 'dashboard' | 'stores' | 'tasks' | 'promotions' | 'newProducts' | 'tracking' | 'excel' | 'dbReview' | 'more' | 'users';
 
 interface SidebarProps {
+  connected?: boolean;
   currentTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
   currentUser: UserProfile;
@@ -34,6 +35,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
+  connected,
   currentTab,
   onSelectTab,
   currentUser,
@@ -180,7 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="mt-2.5 w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-bold text-[var(--color-primary)] bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-secondary)] transition shadow-2xs"
             >
               <Users className="w-3.5 h-3.5" />
-              <span>{t.switchAccount}</span>
+              <span>{connected ? (language === 'lo' ? 'ບັນຊີ' : 'Account') : t.switchAccount}</span>
             </motion.button>
           </div>
         </div>

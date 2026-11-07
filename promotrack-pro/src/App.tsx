@@ -3,7 +3,12 @@
  * 2026 Minimalist + Calm UI Mobile-First Web Application
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import { supabase, supabaseEnabled, projectRef } from './services/supabaseClient';
+import { SupabaseSync, type SyncState } from './services/supabaseSync';
+import { SupabaseSignIn } from './components/SupabaseSignIn';
+import { RemoteAccountsView } from './components/RemoteAccountsView';
 import { Navbar } from './components/Navbar';
 import { Sidebar, NavTab } from './components/Sidebar';
 import { BottomNav } from './components/BottomNav';
@@ -71,6 +76,33 @@ export default function App() {
   const [selectedPromotionForTracking, setSelectedPromotionForTracking] = useState<string | undefined>();
 
   const isOnline = useOnlineStatus();
+  const [authReady, setAuthReady] = useState(!supabaseEnabled);
+  const [session, setSession] = useState<Session | null>(null);
+  const [syncState, setSyncState] = useState<SyncState>({ status: 'loading' });
+  const sync = useRef<SupabaseSync | null>(null);
+
+  useEffect(() => {
+    if (!supabaseEnabled) return;
+    let active = true;
+    void supabase.auth.getSession().then(({ data }) => { if (active) { setSession(data.session); setAuthReady(true); } });
+    const { data } = supabase.auth.onAuthStateChange((_event, next) => { if (active) { setSession(next); setAuthReady(true); } });
+    return () => { active = false; data.subscription.unsubscribe(); };
+  }, []);
+
+  useEffect(() => {
+    if (!supabaseEnabled || !session?.user.id) return;
+    setSyncState({ status: 'loading' });
+    const connection = new SupabaseSync(supabase, projectRef, session.user.id, (state) => {
+      setSyncState(state); if (state.user) setCurrentUser(state.user);
+    });
+    sync.current = connection;
+    void connection.start();
+    return () => { connection.stop(); if (sync.current === connection) sync.current = null; };
+  }, [session?.user.id]);
+
+  const signOut = () => { void supabase.auth.signOut({ scope: 'local' }).then(({ error }) => {
+    if (error) setSyncState((state) => ({ ...state, status: 'error', message: error.message }));
+  }); };
 
   // Initialize and register PWA service worker
   useEffect(() => {
@@ -129,8 +161,23 @@ export default function App() {
     setCurrentTab('tracking');
   };
 
-  // Render Login Screen if user logged out
-  if (!isAuthenticated) {
+  if (supabaseEnabled) {
+    if (!authReady) return <main className="min-h-screen flex items-center justify-center p-6">{language === 'lo' ? 'ກຳລັງໂຫຼດ…' : 'Loading…'}</main>;
+    if (!session) return <SupabaseSignIn language={language} />;
+    if (!syncState.user || syncState.status === 'loading') return <main className="min-h-screen flex items-center justify-center p-6"><section className="calm-card rounded-3xl p-6 space-y-4 max-w-lg">
+      <h1 className="font-bold">{language === 'lo' ? 'ກຳລັງເຊື່ອມຂໍ້ມູນ…' : 'Connecting your account…'}</h1>
+      {syncState.status === 'error' && <><p role="alert">{syncState.message}</p><button onClick={() => { sync.current?.stop(); const connection = new SupabaseSync(supabase, projectRef, session.user.id, (state) => { setSyncState(state); if (state.user) setCurrentUser(state.user); }); sync.current = connection; void connection.start(); }} className="rounded-xl border p-3">{language === 'lo' ? 'ລອງໃໝ່' : 'Retry'}</button></>}
+      <button onClick={signOut} className="block underline">{language === 'lo' ? 'ອອກຈາກລະບົບ' : 'Sign out'}</button>
+    </section></main>;
+    if (syncState.user.role === 'sales' && !syncState.user.mdeId) return <main className="min-h-screen flex items-center justify-center p-6"><section className="calm-card rounded-3xl p-6 max-w-md space-y-4">
+      <h1 className="font-bold">{language === 'lo' ? 'ລໍຖ້າ Admin ມອບໝາຍ MDE' : 'Waiting for an MDE assignment'}</h1>
+      <p className="text-sm break-all">{syncState.user.email}</p><p className="text-sm">{language === 'lo' ? 'ໃຫ້ Admin ເລືອກ MDE ໃຫ້ບັນຊີນີ້ໃນໜ້າຈັດການຜູ້ໃຊ້.' : 'Ask Admin to assign your MDE in User Management.'}</p>
+      <button onClick={() => void sync.current?.reload()} className="rounded-xl border p-3">{language === 'lo' ? 'ໂຫຼດໃໝ່' : 'Refresh'}</button><button onClick={signOut} className="block underline">{language === 'lo' ? 'ອອກຈາກລະບົບ' : 'Sign out'}</button>
+    </section></main>;
+  }
+
+  // Local mode remains available only when Supabase is explicitly disabled.
+  if (!isAuthenticated && !supabaseEnabled) {
     return (
       <LoginScreen
         language={language}
@@ -145,6 +192,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col font-sans transition-colors duration-200">
+      {supabaseEnabled && <div role="status" className="px-4 py-2 text-xs text-center bg-[var(--color-surface-secondary)]">
+        {syncState.status === 'offline' ? (language === 'lo' ? 'Offline: ການແກ້ໄຂເກັບໃນເຄື່ອງ ຈົນກວ່າຈະເຊື່ອມຕໍ່.' : 'Offline: edits stay on this device until reconnected.') : (language === 'lo' ? 'ເຊື່ອມຕໍ່ Supabase' : 'Connected to Supabase')}
+      </div>}
+      {supabaseEnabled && (syncState.status === 'saving' || syncState.status === 'error') && <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4"><section role={syncState.status === 'error' ? 'alertdialog' : 'status'} aria-modal="true" className="calm-card rounded-3xl max-w-lg p-5 space-y-4">
+        <h2 className="font-bold">{syncState.status === 'saving' ? (language === 'lo' ? 'ກຳລັງບັນທຶກ…' : 'Saving…') : (language === 'lo' ? 'ກວດການບັນທຶກຂໍ້ມູນ' : 'Changes need attention')}</h2>
+        {syncState.status === 'error' && <><p className="text-sm">{syncState.message}</p><p className="text-xs">{language === 'lo' ? 'ການແກ້ໄຂທີ່ຍັງບໍ່ໄດ້ບັນທຶກ ຍັງເກັບໃນເຄື່ອງ. ການໂຫຼດຈາກຖານຂໍ້ມູນຈະເກັບ draft ສຳຮອງໄວ້.' : 'Unsaved edits are retained on this device. Reloading the database keeps a draft backup.'}</p><div className="flex gap-2 flex-wrap">
+          <button className="rounded-xl border p-3" onClick={() => void sync.current?.flush()}>{language === 'lo' ? 'ລອງບັນທຶກໃໝ່' : 'Retry save'}</button><button className="rounded-xl border p-3" onClick={() => void sync.current?.reload()}>{language === 'lo' ? 'ໂຫຼດຈາກຖານຂໍ້ມູນ' : 'Reload database'}</button>
+        </div></>}
+      </section></div>}
       
       {/* Top Navbar with App Branding */}
       <Navbar
@@ -165,6 +221,7 @@ export default function App() {
         
         {/* Desktop Sidebar / Mobile Drawer */}
         <Sidebar
+          connected={supabaseEnabled}
           currentTab={currentTab}
           onSelectTab={(tab) => {
             if (tab === 'dbReview') {
@@ -295,6 +352,7 @@ export default function App() {
 
           {/* Tab 7: User Management System (Admin Only) */}
           {currentTab === 'users' && (
+            supabaseEnabled ? <RemoteAccountsView currentUser={currentUser} language={language} /> :
             <UserManagementView
               currentUser={currentUser}
               language={language}
@@ -308,6 +366,7 @@ export default function App() {
           {/* Tab 8: More Settings Screen (5th Bottom Nav Tab) */}
           {currentTab === 'more' && (
             <MoreScreen
+              connected={supabaseEnabled}
               currentUser={currentUser}
               appBranding={appBranding}
               language={language}
@@ -321,6 +380,7 @@ export default function App() {
               onOpenThemeColorModal={() => setIsThemeModalOpen(true)}
               onNavigateTab={(tab) => setCurrentTab(tab as NavTab)}
               onLogout={() => {
+                if (supabaseEnabled) { signOut(); return; }
                 dataService.logout();
                 setIsAuthenticated(false);
               }}
@@ -372,7 +432,11 @@ export default function App() {
       />
 
       {/* Switch Demo User Modal */}
-      <SwitchUserModal
+      {supabaseEnabled && isSwitchUserOpen && <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"><section role="dialog" aria-modal="true" className="calm-card rounded-3xl w-full max-w-md p-5 space-y-4">
+        <h2 className="font-bold">{currentUser.fullName}</h2><p className="text-sm break-all">{currentUser.email}</p><p>{currentUser.role}</p>
+        <button className="rounded-xl border p-3" onClick={() => setIsSwitchUserOpen(false)}>{language === 'lo' ? 'ປິດ' : 'Close'}</button><button className="rounded-xl border p-3" onClick={signOut}>{language === 'lo' ? 'ອອກຈາກລະບົບ' : 'Sign out'}</button>
+      </section></div>}
+      {!supabaseEnabled && <SwitchUserModal
         isOpen={isSwitchUserOpen}
         onClose={() => setIsSwitchUserOpen(false)}
         currentUser={currentUser}
@@ -381,7 +445,7 @@ export default function App() {
           loadData();
         }}
         language={language}
-      />
+      />}
 
       {/* Supabase Architecture Review Modal */}
       <DatabaseReviewModal

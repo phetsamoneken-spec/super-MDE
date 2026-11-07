@@ -50,7 +50,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
   const [tabFilter, setTabFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue' | 'completed'>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | TaskPriority>('all');
   const [salesFilter, setSalesFilter] = useState<string>(
-    currentUser.role === 'sales' ? currentUser.id : 'all'
+    currentUser.role === 'sales' ? (currentUser.mdeId || currentUser.id) : 'all'
   );
 
   // Modals

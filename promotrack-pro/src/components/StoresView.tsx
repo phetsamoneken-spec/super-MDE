@@ -72,7 +72,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
   const [channelFilter, setChannelFilter] = useState('all');
   const [subChannelFilter, setSubChannelFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [salesFilter, setSalesFilter] = useState(currentUser.role === 'sales' ? currentUser.id : 'all');
+  const [salesFilter, setSalesFilter] = useState(currentUser.role === 'sales' ? (currentUser.mdeId || currentUser.id) : 'all');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
