@@ -98,7 +98,6 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
   const purchaseGroups=new Map<string,NewProductStoreOrder[]>();
   for(const order of visibleOrders){
     const store=storeMap.get(order.storeId)!;const product=productMap.get(order.productId)!;
-    if(salesFilter!=='all' && (assignmentMap.get(store.assignedSalesUser)||store.assignedSalesUser)!==salesFilter)continue;
     if(purchaseStatus!=='all'&&order.orderStatus!==purchaseStatus)continue;
     const query=purchaseSearch.trim().toLowerCase();
     if(query&&![store.storeName,store.storeCode,product.productName,product.sku].some(value=>value.toLowerCase().includes(query)))continue;
