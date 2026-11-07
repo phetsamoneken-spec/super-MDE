@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 const root = fileURLToPath(new URL('../', import.meta.url));
 import data from '../src/data/outletDataset.json';
-const scaffold = `CREATE ROLE authenticated; CREATE ROLE anon;
+const scaffold = `CREATE ROLE authenticated; CREATE ROLE anon; CREATE ROLE service_role;
 CREATE SCHEMA auth; CREATE TABLE auth.users(id UUID PRIMARY KEY, email TEXT, email_confirmed_at TIMESTAMPTZ);
 CREATE FUNCTION auth.uid() RETURNS UUID LANGUAGE SQL STABLE AS $$ SELECT NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 CREATE SCHEMA storage; CREATE TABLE storage.buckets(id TEXT PRIMARY KEY,name TEXT,public BOOLEAN,file_size_limit BIGINT,allowed_mime_types TEXT[]);
@@ -124,4 +124,25 @@ test('Admin prepares B1–B7 access; only verified matching emails claim it and 
   await db.exec('RESET ROLE;SET ROLE anon');
   await assert.rejects(()=>db.query('SELECT public.admin_assign_user($1,$2,$3)',['anon@example.test','Anon',data.mdes[0].id]),/permission denied/);
  } finally {await db.close();}
+});
+
+
+test('only service role can provision Admin-created MDE profiles; pending assignment is consumed atomically', {timeout:30000}, async()=>{
+ const db=new PGlite({extensions:{'uuid-ossp':uuid_ossp,pgcrypto}});
+ try {
+  await db.exec(scaffold);await db.exec(fs.readFileSync(root+'/supabase/outlet-fresh-setup.sql','utf8'));
+  const id=crypto.randomUUID();const mde=data.mdes[0].id;
+  await db.query("INSERT INTO auth.users(id,email,email_confirmed_at) VALUES($1,'new-mde@example.test',now())",[id]);
+  const signature='public.app_provision_mde_account(uuid,text,text,uuid,text)';
+  for(const role of ['anon','authenticated'])assert.equal((await db.query<{ok:boolean}>("SELECT has_function_privilege($1,$2,'EXECUTE') AS ok",[role,signature])).rows[0].ok,false);
+  assert.equal((await db.query<{ok:boolean}>("SELECT has_function_privilege('service_role',$1,'EXECUTE') AS ok",[signature])).rows[0].ok,true);
+  await db.query("SELECT public.app_provision_mde_account($1,'new-mde@example.test','MDE name',$2,'data:image/png;base64,AAAA')",[id,mde]);
+  const profile=(await db.query<any>('SELECT * FROM public.profiles WHERE id=$1',[id])).rows[0];
+  assert.equal(profile.role,'sales');assert.equal(profile.mde_id,mde);assert.equal(profile.full_name,'MDE name');assert.equal(profile.avatar_url,'data:image/png;base64,AAAA');
+  await db.query("INSERT INTO public.app_user_assignments(email,full_name,mde_id,created_by) VALUES('new-mde@example.test','Old pending',$1,$2)",[mde,id]);
+  await db.query("SELECT public.app_provision_mde_account($1,'new-mde@example.test','MDE name',$2,NULL)",[id,mde]);
+  assert.equal((await db.query<{n:number}>("SELECT count(*)::int AS n FROM public.app_user_assignments WHERE email='new-mde@example.test'")).rows[0].n,0);
+  await db.query("UPDATE public.profiles SET role='admin' WHERE id=$1",[id]);
+  await assert.rejects(db.query("SELECT public.app_provision_mde_account($1,'new-mde@example.test','Changed',$2,NULL)",[id,mde]),/Admin/);
+ }finally{await db.close();}
 });

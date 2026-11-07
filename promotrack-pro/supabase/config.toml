@@ -1,0 +1,3 @@
+[functions.admin-mde-account]
+# JWT is verified by getUser inside the handler, including refreshed sessions.
+verify_jwt = false
