@@ -167,14 +167,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dashboard-page > div:first-child p { font-size: 12px; }
 .app-topbar { border-bottom-width: 1px; background: color-mix(in srgb,var(--color-surface) 94%,transparent); backdrop-filter: blur(16px); }
 .connection-status { font-size: 10px; padding: 4px 16px; color: var(--color-primary); }
-.app-content { animation: page-arrive .3s ease-out both; }
+/* Keep the content shell free of transforms/animation fill so fixed dialogs
+   stay anchored to the viewport and above the sidebar, even on long lists. */
 .mobile-dock > div { box-shadow: 0 12px 45px #153e3424; background: color-mix(in srgb,var(--color-surface) 96%,transparent); backdrop-filter: blur(18px); border-radius: 26px; padding: 8px 5px; }
 .mobile-dock button { min-height: 54px; gap: 7px; }
 .mobile-dock button[aria-current=page] { background: var(--color-surface-secondary); }
 .mobile-dock button span:last-child { line-height: 1.5; font-size: 10px; max-width: 100%; }
 @keyframes gentle-float { 0%,100% { translate: 0 0; } 50% { translate: 0 -7px; } }
 @keyframes artwork-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes page-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 639px) {
   .signin-page { padding: 0; align-items: start; }
   .signin-shell { grid-template-columns: 1fr; border: 0; border-radius: 0; min-height: 100svh; }

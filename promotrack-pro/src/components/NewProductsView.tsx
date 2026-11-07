@@ -1302,7 +1302,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
       {/* ======================================================== */}
       <AnimatePresence>
         {updatingOrder && updatingStore && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="launch-order-status-title" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4">
             <motion.div
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -1314,7 +1314,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
 
               <div className="flex items-start justify-between pb-3 border-b border-[var(--color-border)]">
                 <div>
-                  <h3 className="text-base font-black text-[var(--color-text-primary)]">
+                  <h3 id="launch-order-status-title" className="text-base font-black text-[var(--color-text-primary)]">
                     {language === 'lo' ? 'ອັບເດດການສັ່ງຊື້ສິນຄ້າໃໝ່' : 'Update Launch Order Status'}
                   </h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
