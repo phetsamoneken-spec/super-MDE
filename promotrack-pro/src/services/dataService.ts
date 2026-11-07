@@ -33,6 +33,7 @@ import {
 } from './workbookData';
 import { DATASET_VERSION, OUTLET_DATASET } from './workbookData';
 import * as XLSX from 'xlsx';
+import { APP_LOGO_URL, LOGO_REVISION } from './branding';
 import { stateStorageKeys, type AppData } from './appState';
 
 // A separate namespace activates only the supplied workbook. Old browser data
@@ -58,12 +59,12 @@ export const STORAGE_KEYS = {
 };
 
 const DEFAULT_BRANDING: AppBranding = {
-  appName: 'PromoTrack',
+  appName: 'Super MDE',
   tagline: 'Sales Promotion & Store Execution PWA',
-  logoType: 'icon',
+  logoType: 'custom',
   logoIcon: 'Sparkles',
   logoColor: '#248A60',
-  customLogoUrl: ''
+  customLogoUrl: APP_LOGO_URL
 };
 
 class DataService {
@@ -185,7 +186,17 @@ class DataService {
   public getAppBranding(): AppBranding {
     try {
       const stored = this.readStored(STORAGE_KEYS.APP_BRANDING);
-      if (stored) return { ...DEFAULT_BRANDING, ...JSON.parse(stored) };
+      const branding = { ...DEFAULT_BRANDING, ...(stored ? JSON.parse(stored) : {}) } as AppBranding;
+      // Apply the owner's new logo once to existing devices; keep their app name,
+      // tagline and theme. Later explicit customizations remain supported.
+      if (this.readStored('promotrack_logo_revision') !== LOGO_REVISION) {
+        branding.logoType = 'custom';
+        branding.customLogoUrl = APP_LOGO_URL;
+        if (branding.appName === 'PromoTrack') branding.appName = DEFAULT_BRANDING.appName;
+        this.writeStored(STORAGE_KEYS.APP_BRANDING, JSON.stringify(branding));
+        this.writeStored('promotrack_logo_revision', LOGO_REVISION);
+      }
+      return branding;
     } catch {
       // fallback
     }

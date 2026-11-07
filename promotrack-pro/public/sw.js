@@ -3,16 +3,18 @@
  * Version: promotrack-v1.0.0
  */
 
-const CACHE_NAME = `promotrack-shell-v3:${self.registration.scope}`;
+const CACHE_NAME = `promotrack-shell-v4:${self.registration.scope}`;
 const APP_ROOT = self.registration.scope;
 const STATIC_ASSETS = [
   './',
   'index.html',
   'manifest.webmanifest',
   'fonts/noto-sans-lao-v33-lao.woff2',
-  'icons/icon.svg',
-  'icons/icon-192.png',
-  'icons/icon-512.png'
+  'icons/super-mde-32-v1.png',
+  'icons/super-mde-180-v1.png',
+  'icons/super-mde-192-v1.png',
+  'icons/super-mde-512-v1.png',
+  'icons/super-mde-maskable-512-v1.png'
 ].map((asset) => new URL(asset, APP_ROOT).href);
 
 self.addEventListener('install', (event) => {

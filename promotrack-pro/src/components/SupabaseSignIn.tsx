@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { LockKeyhole, Sparkles } from 'lucide-react';
+import { LockKeyhole } from 'lucide-react';
+import { BrandLogo } from './BrandLogo';
+import { dataService } from '../services/dataService';
 import { FieldIllustration } from './FieldIllustration';
 import { supabase } from '../services/supabaseClient';
 import type { Language } from '../types';
 
 export function SupabaseSignIn({ language }: { language: Language }) {
   const lao = language === 'lo';
+  const branding = dataService.getAppBranding();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [register, setRegister] = useState(false);
@@ -30,7 +33,7 @@ export function SupabaseSignIn({ language }: { language: Language }) {
   return <main className="signin-page">
     <motion.section initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} transition={{duration:0.45}} className="signin-shell">
       <div className="signin-story">
-        <div className="signin-wordmark"><span><Sparkles size={20}/></span> PromoTrack <span className="signin-app-tag">FIELD APP</span></div>
+        <div className="signin-wordmark"><BrandLogo branding={branding} size="lg"/> {branding.appName} <span className="signin-app-tag">FIELD APP</span></div>
         <FieldIllustration />
         <div className="signin-story-copy"><p className="eyebrow">{lao ? 'ທຸກຮ້ານຄ້າ. ທຸກໂອກາດ.' : 'EVERY OUTLET. EVERY OPPORTUNITY.'}</p>
         <h2>{lao ? 'ວຽກພາກສະໜາມ' : 'Your day in the field,'}<br/>{lao ? 'ທີ່ງ່າຍຂຶ້ນ.' : 'made simple.'}</h2>

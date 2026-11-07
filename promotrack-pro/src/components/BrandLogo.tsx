@@ -43,7 +43,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         <img
           src={branding.customLogoUrl}
           alt={branding.appName}
-          className="w-full h-full object-contain p-1"
+          className="w-full h-full object-contain"
         />
       </div>
     );
