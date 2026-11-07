@@ -3,12 +3,13 @@
  * Version: promotrack-v1.0.0
  */
 
-const CACHE_NAME = `promotrack-shell-v2:${self.registration.scope}`;
+const CACHE_NAME = `promotrack-shell-v3:${self.registration.scope}`;
 const APP_ROOT = self.registration.scope;
 const STATIC_ASSETS = [
   './',
   'index.html',
   'manifest.webmanifest',
+  'fonts/noto-sans-lao-v33-lao.woff2',
   'icons/icon.svg',
   'icons/icon-192.png',
   'icons/icon-512.png'

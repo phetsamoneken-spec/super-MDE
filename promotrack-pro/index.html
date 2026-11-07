@@ -24,10 +24,11 @@
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%icons/icon.svg" />
     <link rel="apple-touch-icon" href="%BASE_URL%icons/icon-192.png" />
 
-    <!-- Fonts: Inter & Noto Sans Lao -->
+    <!-- Lao font is hosted locally; Inter supplies the English glyphs. -->
+    <link rel="preload" href="%BASE_URL%fonts/noto-sans-lao-v33-lao.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Lao:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-[var(--color-bg)] text-[var(--color-text-primary)] antialiased selection:bg-emerald-500 selection:text-white font-sans">
     <div id="root"></div>
