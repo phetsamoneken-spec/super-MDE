@@ -1,3 +1,4 @@
+import { CampaignImage } from './CampaignImage';
 import React, { useState, useMemo } from 'react';
 import {
   X,
@@ -212,14 +213,7 @@ export const PromotionStoresDetailModal: React.FC<PromotionStoresDetailModalProp
         className="w-full sm:max-w-2xl bg-[var(--color-surface)] border border-[var(--color-border)] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden"
       >
         {/* 1. Large Hero Header Banner */}
-        <div className="relative h-44 sm:h-52 bg-slate-950 overflow-hidden shrink-0">
-          <img
-            src={promotion.imageUrl || `${import.meta.env.BASE_URL}icons/image-placeholder.svg`}
-            alt={promotion.promotionName}
-            className="w-full h-full object-cover opacity-85"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
+        <div className="relative shrink-0 p-4 pr-14 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
           {/* Close button */}
           <motion.button
             whileTap={{ scale: 0.85 }}
@@ -234,7 +228,7 @@ export const PromotionStoresDetailModal: React.FC<PromotionStoresDetailModalProp
           </motion.button>
 
           {/* Top Status & Admin Action Badges */}
-          <div className="absolute top-3 left-3 flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span
               className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-sm ${
                 promotion.status === 'Active'
@@ -280,16 +274,16 @@ export const PromotionStoresDetailModal: React.FC<PromotionStoresDetailModalProp
           </div>
 
           {/* Promotion Details over Banner */}
-          <div className="absolute bottom-3 left-4 right-4 text-white">
-            <h2 className="text-lg sm:text-xl font-black leading-tight drop-shadow-md">
+          <div className="mt-3 text-[var(--color-text-primary)]">
+            <h2 className="text-lg sm:text-xl font-black leading-snug">
               {promotion.promotionName}
             </h2>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-200 mt-1">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-secondary)] mt-1">
               <span className="flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-emerald-400" />
                 {promotion.startDate} - {promotion.endDate}
               </span>
-              <span className="text-emerald-300 font-bold">
+              <span className="text-[var(--color-primary)] font-bold">
                 {summary.convRate}% {language === 'lo' ? 'ສັ່ງຊື້ແລ້ວ' : 'ordered'} ({summary.orderedCount}/{summary.total})
               </span>
             </div>
@@ -297,8 +291,9 @@ export const PromotionStoresDetailModal: React.FC<PromotionStoresDetailModalProp
         </div>
 
         {/* 2. Content Body - Scrollable */}
-        <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
+        <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1 min-h-0">
           
+          <CampaignImage src={promotion.imageUrl} alt={promotion.promotionName} language={language} full className="campaign-modal-image rounded-2xl"/>
           {/* Description */}
           {promotion.description && (
             <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-secondary)] p-3 rounded-2xl">

@@ -1,3 +1,4 @@
+import { CampaignImage } from './CampaignImage';
 import React, { useState, useMemo } from 'react';
 import {
   Tag,
@@ -331,37 +332,12 @@ export const PromotionsView: React.FC<PromotionsViewProps> = ({
               }}
               className="glass-panel rounded-3xl overflow-hidden border border-slate-200/70 dark:border-slate-800/80 shadow-sm hover:shadow-lg transition-all flex flex-col group cursor-pointer"
             >
-              {/* Promotion Image / Header Banner */}
-              <div className="relative h-36 sm:h-40 bg-slate-900 overflow-hidden">
-                <img
-                  src={promo.imageUrl || `${import.meta.env.BASE_URL}icons/image-placeholder.svg`}
-                  alt={promo.promotionName}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                {/* Status Badge */}
-                <div className="absolute top-3 right-3">
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md ${
-                    promo.status === 'Active'
-                      ? 'bg-emerald-500/90 text-white shadow-sm'
-                      : promo.status === 'Draft'
-                      ? 'bg-amber-500/90 text-white'
-                      : 'bg-slate-700/90 text-slate-200'
-                  }`}>
-                    {promo.status}
-                  </span>
-                </div>
-
-                {/* Name & Dates on banner */}
-                <div className="absolute bottom-3 left-3 right-3 text-white">
-                  <h3 className="text-sm sm:text-base font-black leading-tight drop-shadow-sm">
-                    {promo.promotionName}
-                  </h3>
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-200 mt-1">
-                    <Calendar className="w-3 h-3 text-emerald-400" />
-                    <span>{promo.startDate} - {promo.endDate}</span>
-                  </div>
+              <div>
+                <CampaignImage src={promo.imageUrl} alt={promo.promotionName} language={language} full/>
+                <div className="p-4 pb-0 space-y-2">
+                  <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold ${promo.status==='Active'?'bg-emerald-500 text-white':promo.status==='Draft'?'bg-amber-500 text-white':'bg-slate-700 text-slate-200'}`}>{promo.status}</span>
+                  <h3 className="text-sm sm:text-base font-black leading-snug text-[var(--color-text-primary)]">{promo.promotionName}</h3>
+                  <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-text-secondary)]"><Calendar className="w-3 h-3 text-[var(--color-primary)]"/><span>{promo.startDate} - {promo.endDate}</span></div>
                 </div>
               </div>
 
@@ -665,8 +641,8 @@ export const PromotionsView: React.FC<PromotionsViewProps> = ({
                   </label>
 
                   {imagePreview ? (
-                    <div className="relative rounded-2xl overflow-hidden h-36 border border-[var(--color-border)] bg-slate-950">
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="relative rounded-2xl overflow-hidden border border-[var(--color-border)] bg-slate-950">
+                      <img src={imagePreview} alt="Preview" className="w-full h-auto max-h-80 object-contain" />
                       <button
                         type="button"
                         onClick={() => {

@@ -308,3 +308,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .colorful-dashboard .dashboard-quick-actions { gap: 8px; }
   .colorful-dashboard .dashboard-quick-actions > button { padding: 12px 7px; font-size: 10px; }
 }
+
+/* Padding also keeps poster corners clear of the card's rounded clipping. */
+.campaign-image-full { padding: 12px; }
+.campaign-image-full > .campaign-image-full-content { display: block; width: 100%; height: auto; max-height: 28rem; object-fit: contain; object-position: center; }
+.campaign-image-full > [role="img"] { min-height: 160px; }
+.campaign-modal-image > .campaign-image-full-content { max-height: 40vh; }

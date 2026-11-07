@@ -392,11 +392,11 @@ export const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
 
             {/* Preview */}
             {(imagePreview || formData.imageUrl) && (
-              <div className="relative h-32 sm:h-36 rounded-2xl overflow-hidden bg-slate-900 border border-[var(--color-border)]">
+              <div className="relative rounded-2xl overflow-hidden bg-slate-900 border border-[var(--color-border)]">
                 <img
                   src={imagePreview || formData.imageUrl}
                   alt="Promotion preview"
-                  className="w-full h-full object-cover"
+                  className="w-full h-auto max-h-80 object-contain"
                 />
                 <button
                   type="button"

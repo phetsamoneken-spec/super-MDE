@@ -1,3 +1,4 @@
+import { CampaignImage } from './CampaignImage';
 import React, { useState, useMemo, useRef } from 'react';
 import {
   Sparkles,
@@ -707,31 +708,12 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                   className="calm-card rounded-3xl overflow-hidden border border-[var(--color-border)] flex flex-col justify-between hover:border-[var(--color-primary)]/40 transition shadow-2xs"
                 >
                   <div>
-                    {/* Image and Header */}
-                    <div className="relative h-40 bg-slate-100 dark:bg-slate-800">
-                      <img
-                        src={product.imageUrl || `${import.meta.env.BASE_URL}icons/image-placeholder.svg`}
-                        alt={product.productName}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/60 text-white backdrop-blur-xs font-mono">
-                          {product.sku}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/90 text-[var(--color-text-primary)] dark:bg-slate-900/90 backdrop-blur-xs">
-                          {product.category}
-                        </span>
-                      </div>
-
-                      <div className="absolute top-2.5 right-2.5">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          product.status === 'Active'
-                            ? 'bg-emerald-500 text-white'
-                            : 'bg-slate-500 text-white'
-                        }`}>
-                          {product.status}
-                        </span>
-                      </div>
+                    {/* Keep the poster unobstructed; metadata belongs below it. */}
+                    <CampaignImage src={product.imageUrl} alt={product.productName} language={language} full/>
+                    <div className="px-4 pt-3 flex flex-wrap items-center gap-2">
+                      <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-[var(--color-surface-secondary)] text-[var(--color-text-primary)] font-mono">{product.sku}</span>
+                      <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-[var(--color-surface-secondary)] text-[var(--color-text-secondary)]">{product.category}</span>
+                      <span className={`ml-auto px-2 py-1 rounded-full text-[10px] font-bold ${product.status==='Active'?'bg-emerald-500 text-white':'bg-slate-500 text-white'}`}>{product.status}</span>
                     </div>
 
                     {/* Product Details */}
@@ -1771,7 +1753,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                     <img
                       src={formData.imageUrl || `${import.meta.env.BASE_URL}icons/image-placeholder.svg`}
                       alt="Product Preview"
-                      className="w-16 h-16 rounded-2xl object-cover ring-2 ring-[var(--color-primary)] shrink-0"
+                      className="w-16 h-16 rounded-2xl object-contain ring-2 ring-[var(--color-primary)] shrink-0"
                     />
                     <div className="space-y-1">
                       <input

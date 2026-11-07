@@ -450,12 +450,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 className="calm-card rounded-3xl overflow-hidden cursor-pointer group hover:border-[var(--color-primary)] transition border border-[var(--color-border)] shadow-xs"
               >
                 {/* 1. Large Image Banner */}
-                <div className="relative h-36 sm:h-44 w-full bg-slate-950 overflow-hidden">
-                  <CampaignImage src={promo.imageUrl} alt={promo.promotionName} language={language} className="w-full h-full group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+                <div className="bg-[var(--color-surface)]">
+                  <CampaignImage src={promo.imageUrl} alt={promo.promotionName} language={language} full/>
+                  <div className="flex items-center justify-between gap-2 px-3 pt-3">
 
                   {/* Top: Status Badge + Admin Edit/Delete */}
-                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5">
                     <span
                       className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-xs ${
                         promo.status === 'Active'
@@ -469,10 +469,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </span>
                   </div>
 
-                  {/* Admin Quick Action Buttons over image */}
+                  {/* Admin Quick Action Buttons below image */}
                   {currentUser.role === 'admin' && (
                     <div
-                      className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5"
+                      className="flex items-center gap-1.5"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <motion.button
@@ -512,12 +512,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   )}
 
-                  {/* Bottom: Promotion Title & Dates */}
-                  <div className="absolute bottom-2.5 left-3 right-3 text-white">
-                    <h4 className="text-sm sm:text-base font-extrabold leading-tight drop-shadow-sm truncate">
+                  </div>
+                  {/* Title and controls stay outside the image. */}
+                  <div className="p-3 text-[var(--color-text-primary)]">
+                    <h4 className="text-sm sm:text-base font-extrabold leading-snug break-words">
                       {promo.promotionName}
                     </h4>
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-200 mt-0.5">
+                    <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-text-secondary)] mt-0.5">
                       <Calendar className="w-3 h-3 text-emerald-400 shrink-0" />
                       <span>{promo.startDate} - {promo.endDate}</span>
                     </div>
@@ -565,8 +566,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {recent(newProducts).map(product=>{
             const orders = newProductOrders.filter(order=>order.productId===product.id);
             const ordered = orders.filter(order=>order.orderStatus==='Ordered').length;
-            return <motion.button key={product.id} whileTap={{scale:.985}} onClick={()=>onOpenNewProductOrders(product.id)} className="calm-card rounded-3xl overflow-hidden text-left min-w-0" aria-label={`${language === 'lo' ? 'ເບິ່ງການສັ່ງຊື້' : 'View orders'}: ${product.productName}`}>
-              <CampaignImage src={product.imageUrl} alt={product.productName} language={language} contain className="h-40 sm:h-44 w-full"/>
+            return <motion.button key={product.id} whileTap={{scale:.985}} onClick={()=>onOpenNewProductOrders(product.id)} className="calm-card rounded-3xl overflow-hidden text-left min-w-0 flex flex-col" aria-label={`${language === 'lo' ? 'ເບິ່ງການສັ່ງຊື້' : 'View orders'}: ${product.productName}`}>
+              <CampaignImage src={product.imageUrl} alt={product.productName} language={language} full/>
               <div className="p-4 space-y-2"><div className="flex justify-between gap-2"><h4 className="text-sm font-bold break-words">{product.productName}</h4><span className="text-[10px] text-[var(--color-primary)] shrink-0">{product.status}</span></div><p className="text-xs text-[var(--color-text-secondary)]">{product.sku} · {product.packSize}</p><div className="flex items-center justify-between text-xs gap-2"><span>{language === 'lo' ? 'ຮ້ານທີ່ສັ່ງຊື້' : 'Stores ordered'}: <strong>{ordered}/{orders.length}</strong></span><span className="text-[var(--color-primary)] flex items-center gap-1">{language === 'lo' ? 'ເບິ່ງການສັ່ງຊື້' : 'View orders'}<ChevronRight size={14}/></span></div></div>
             </motion.button>;
           })}
