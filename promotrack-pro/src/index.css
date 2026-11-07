@@ -210,3 +210,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Keep every outlet on one aligned row; scroll the table instead of squeezing Lao text. */
+.store-table-scroll { max-width: 100%; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.store-directory-table { width: max-content; min-width: 100%; border-collapse: collapse; }
+.store-directory-table th, .store-directory-table td { white-space: nowrap; vertical-align: middle; line-height: 1.65; }
+.store-directory-table th:nth-child(2), .store-directory-table td:nth-child(2) { min-width: 260px; }
+.store-directory-table th:nth-child(7), .store-directory-table td:nth-child(7) { min-width: 245px; }
+.store-directory-table td img { flex-shrink: 0; }
+.store-table-scroll::-webkit-scrollbar { height: 8px; }

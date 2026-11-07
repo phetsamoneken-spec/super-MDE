@@ -4,7 +4,7 @@ import {
   Store,
   CheckSquare,
   Tag,
-  MoreHorizontal
+  Settings
 } from 'lucide-react';
 import { NavTab } from './Sidebar';
 import { Language } from '../types';
@@ -38,7 +38,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       badge: overdueTasksCount > 0 ? overdueTasksCount : undefined
     },
     { id: 'promotions' as NavTab, label: language === 'lo' ? 'ໂປຣໂມຊັ່ນ' : 'Promos', icon: Tag },
-    { id: 'more' as NavTab, label: language === 'lo' ? 'ອື່ນໆ' : 'More', icon: MoreHorizontal }
+    { id: 'more' as NavTab, label: language === 'lo' ? 'ຕັ້ງຄ່າ' : 'Settings', icon: Settings }
   ];
 
   const handleTabClick = (tabId: NavTab) => {

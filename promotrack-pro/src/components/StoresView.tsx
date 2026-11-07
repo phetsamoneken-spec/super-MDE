@@ -673,8 +673,8 @@ export const StoresView: React.FC<StoresViewProps> = ({
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="store-table-scroll hidden md:block overflow-x-auto" role="region" aria-label={language === 'lo' ? 'ຕາຕະລາງຮ້ານຄ້າ' : 'Store directory'} tabIndex={0}>
+              <table className="store-directory-table w-full text-left text-xs">
                 <thead className="bg-[var(--color-surface-secondary)]/70 border-b border-[var(--color-border)] text-[var(--color-text-secondary)] uppercase tracking-wider font-semibold">
                   <tr>
                     <th className="py-3 px-4">{t.storeCode}</th>

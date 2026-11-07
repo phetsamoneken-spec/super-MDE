@@ -73,7 +73,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
       {/* Title */}
       <div>
         <h2 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight">
-          {language === 'lo' ? 'ເມນູເພີ່ມເຕີມ' : 'More Settings'}
+          {language === 'lo' ? 'ຕັ້ງຄ່າ' : 'Settings'}
         </h2>
         <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
           {language === 'lo' ? 'ຈັດການບັນຊີ, ນຳເຂົ້າຂໍ້ມູນ ແລະ ການຕັ້ງຄ່າ' : 'Account profile, tools, and app settings'}

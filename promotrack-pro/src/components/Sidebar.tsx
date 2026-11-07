@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   ChevronRight,
   TrendingUp,
-  MoreHorizontal,
+  Settings,
   X,
   PackagePlus
 } from 'lucide-react';
@@ -71,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: currentUser.role === 'admin' ? 'Admin' : undefined
     },
     { id: 'excel' as NavTab, label: t.navExcel, icon: FileSpreadsheet },
-    { id: 'more' as NavTab, label: language === 'lo' ? 'ເມນູເພີ່ມເຕີມ' : 'More Settings', icon: MoreHorizontal }
+    { id: 'more' as NavTab, label: language === 'lo' ? 'ຕັ້ງຄ່າ' : 'Settings', icon: Settings }
   ];
 
   const handleSelect = (id: NavTab) => {
