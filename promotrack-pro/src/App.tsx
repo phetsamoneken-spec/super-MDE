@@ -230,6 +230,7 @@ export default function App() {
         {/* Desktop Sidebar / Mobile Drawer */}
         <Sidebar
           connected={supabaseEnabled}
+          branding={appBranding}
           currentTab={currentTab}
           onSelectTab={(tab) => {
             if (tab === 'dbReview') {

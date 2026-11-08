@@ -1,0 +1,75 @@
+.app-sidebar.premium-sidebar {
+  width: min(344px,calc(100vw - 28px)); padding: 0; display: flex;
+  flex-direction: column; overflow: hidden; border-radius: 0 26px 26px 0;
+  background: var(--color-surface); border-right: 1px solid var(--color-border);
+  box-shadow: 18px 0 60px #072d2526; isolation: isolate;
+  transition-timing-function: cubic-bezier(.22,1,.36,1);
+}
+.sidebar-backdrop { background: #052e2580; backdrop-filter: blur(5px); }
+.sidebar-brand-header {
+  flex-shrink: 0; padding: max(23px,env(safe-area-inset-top,0px)) 20px 20px;
+  background: radial-gradient(ellipse at 100% 0,#26b58c55,transparent 65%),linear-gradient(135deg,#004d3a,#006b4f);
+  color: #fff;
+}
+.sidebar-brand-line { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.sidebar-brand-logo { width: 48px; height: 48px; border-radius: 15px; box-shadow: 0 5px 18px #00251a30; }
+.sidebar-brand-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.sidebar-brand-copy > span { font-size: 8px; font-weight: 750; letter-spacing: .15em; color: #c3e9db; }
+.sidebar-brand-copy strong { font-size: 20px; font-weight: 850; line-height: 1.4; overflow-wrap: anywhere; letter-spacing: -.03em; }
+.sidebar-close { flex-shrink: 0; min-height: 44px; min-width: 44px; display: grid; place-items: center; border-radius: 13px; background: #ffffff12; border: 1px solid #ffffff25; color: #fff; }
+.sidebar-close:hover { background: #ffffff22; }
+.sidebar-close:focus-visible { outline: 2px solid #ddef9e; outline-offset: 3px; }
+.sidebar-header-caption { display: flex; align-items: center; gap: 9px; margin-top: 20px; font-size: 11px; color: #d9eee6; line-height: 1.8; }
+.sidebar-caption-line { width: 22px; height: 3px; border-radius: 4px; background: #ddef9e; }
+.sidebar-navigation { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 22px 14px; scrollbar-width: thin; }
+.sidebar-nav-group + .sidebar-nav-group { margin-top: 24px; }
+.sidebar-nav-group h2 { padding: 0 12px; margin-bottom: 10px; color: var(--color-text-secondary); font-size: 10px; font-weight: 750; letter-spacing: .06em; line-height: 1.9; }
+.sidebar-nav-links { display: grid; gap: 5px; }
+.sidebar-nav-link { position: relative; display: flex; width: 100%; align-items: center; gap: 11px; min-height: 53px; padding: 9px 12px; border-radius: 15px; color: var(--color-text-primary); text-align: left; transition: background-color 180ms,color 180ms,transform 160ms; }
+.sidebar-nav-link:hover { background: var(--color-surface-secondary); }
+.sidebar-nav-link:active { transform: scale(.98); }
+.sidebar-nav-icon { flex-shrink: 0; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: #eaf4ef; color: #377a62; }
+.sidebar-nav-label { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; line-height: 1.9; overflow-wrap: anywhere; }
+.sidebar-nav-link.is-active { background: linear-gradient(105deg,#006b4f,#008263); color: #fff; box-shadow: 0 7px 18px -10px #006b4f9e; }
+.sidebar-nav-link.is-active .sidebar-nav-icon { background: #ffffff1c; color: #fff; }
+.sidebar-nav-chevron { flex-shrink: 0; color: #daf0b4; }
+.sidebar-nav-badge { flex-shrink: 0; padding: 2px 7px; border-radius: 7px; font-size: 9px; font-weight: 800; line-height: 1.5; background: #e7f2ed; color: #287357; }
+.sidebar-nav-badge.is-npd { background: #f2edc7; color: #706214; }
+.sidebar-nav-link.is-active .sidebar-nav-badge { background: #e7f2c6; color: #245440; }
+.sidebar-account-footer { flex-shrink: 0; padding: 14px 16px max(18px,env(safe-area-inset-bottom,0px)); background: var(--color-surface); border-top: 1px solid var(--color-border); box-shadow: 0 -8px 24px -22px #073a2840; }
+.sidebar-account-card { display: flex; align-items: center; gap: 11px; padding: 12px; border: 1px solid var(--color-border); background: var(--color-surface-secondary); border-radius: 19px; }
+.sidebar-account-photo { flex-shrink: 0; border-radius: 13px; background: var(--color-surface); border: 1px solid var(--color-border); overflow: hidden; }
+.sidebar-account-photo img { width: 45px; height: 54px; padding: 2px; object-fit: contain; }
+.sidebar-account-open { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; min-height: 54px; text-align: left; color: var(--color-text-primary); }
+.sidebar-account-open > svg { flex-shrink: 0; color: var(--color-text-secondary); }
+.sidebar-account-copy { display: grid; gap: 4px; flex: 1; min-width: 0; }
+.sidebar-account-copy strong { font-size: 13px; font-weight: 800; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-account-copy > span { display: flex; align-items: center; gap: 5px; color: var(--color-text-secondary); font-size: 10px; line-height: 1.9; flex-wrap: wrap; }
+.sidebar-account-separator { opacity: .6; }
+.dark .sidebar-nav-icon { background: #203c30; color: #b1dfc9; }
+.dark .sidebar-nav-badge { background: #223d31; color: #b9dfcd; }
+.dark .sidebar-nav-badge.is-npd { background: #403a21; color: #e8da93; }
+.dark .sidebar-account-card { background: #1c3026; }
+@media(min-width:1024px) {
+ .app-sidebar.premium-sidebar { width: 256px; border-radius: 0; box-shadow: none; }
+ .sidebar-brand-header { padding: 20px 16px 17px; }
+ .sidebar-brand-logo { width: 40px; height: 40px; border-radius: 12px; }
+ .sidebar-brand-copy strong { font-size: 18px; }
+ .sidebar-brand-copy > span { font-size: 7px; }
+ .sidebar-header-caption { margin-top: 15px; font-size: 10px; }
+ .sidebar-close { display: none; }
+ .sidebar-navigation { padding: 19px 11px; }
+ .sidebar-nav-link { padding: 8px 10px; gap: 9px; }
+ .sidebar-nav-label { font-size: 12px; }
+ .sidebar-nav-icon { width: 30px; height: 30px; border-radius: 9px; }
+ .sidebar-nav-badge { padding: 2px 5px; font-size: 8px; }
+ .sidebar-nav-chevron { width: 12px; }
+ .sidebar-account-footer { padding: 12px; }
+ .sidebar-account-card { padding: 10px; gap: 9px; }
+ .sidebar-account-open { gap: 5px; }
+ .sidebar-account-copy strong { font-size: 12px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ .app-sidebar.premium-sidebar,.sidebar-nav-link { transition: none; }
+ .sidebar-nav-link:active { transform: none; }
+}

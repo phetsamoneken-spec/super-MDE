@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./components/coverage.css";
+@import "./components/sidebar.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Serve Lao glyphs with the app so they also work without Google Fonts. */
