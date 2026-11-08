@@ -32,6 +32,7 @@ import { applyThemeColor } from './utils/themeColors';
 import { dataService } from './services/dataService';
 import { UserProfile, Language, Store, Promotion, PromotionStore, FollowUpTask, AppBranding, NewProductLaunch, NewProductStoreOrder } from './types';
 import { registerServiceWorker } from './pwaRegister';
+import { CoverageView } from './components/CoverageView';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { WifiOff } from 'lucide-react';
 
@@ -275,6 +276,10 @@ export default function App() {
               onRefreshData={loadData}
             />
           )}
+
+          {currentTab==='coverage'&&<CoverageView stores={stores} mdes={salesReps} user={currentUser} language={language}
+            promotions={promotions} promoStores={promoStores} products={newProducts} productOrders={newProductStoreOrders}
+            onOpenPromotion={handleOpenTrackingForPromo} onOpenProduct={handleOpenNewProductOrders}/>}
 
           {/* Tab 2: Store Management */}
           {currentTab === 'stores' && (

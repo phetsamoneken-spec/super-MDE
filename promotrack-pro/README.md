@@ -37,6 +37,7 @@ The deployment workflow uses Node 24 and Bun 1.4.4, runs tests and TypeScript, b
 - To-do includes a new-product purchases view even when there are no tasks, plus outlet/product-specific order details and navigation from each task.
 - Original nine-column workbook import, validation, duplicate skip/update, blank template download and matching nine-column outlet export.
 - Theme, branding/logo upload, Lao/English, PWA install guidance and offline shell/font caching.
+- Monthly outlet visit coverage, daily reporting, scoped history and Excel export; see [Coverage behavior and rollout](docs/outlet-coverage.md). Visit reads/writes require internet; live migration and publication await owner approval.
 
 Connected data is cached in IndexedDB per project and Auth user. Offline edits are retained and retried on reconnect; version conflicts require review/reload. Theme, language and branding remain device preferences. Old local data is preserved separately and is never automatically imported into the database. Explicit `VITE_SUPABASE_ENABLED=false` enables the original local-only mode for development.
 

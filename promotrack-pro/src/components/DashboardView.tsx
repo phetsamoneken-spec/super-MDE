@@ -1,4 +1,5 @@
 import { CampaignImage } from './CampaignImage';
+import { CoverageOverview } from './CoverageOverview';
 import { DashboardCampaignCarousel } from './DashboardCampaignCarousel';
 import { avatarFor } from '../utils/avatar';
 import React, { useState, useMemo } from 'react';
@@ -42,7 +43,7 @@ interface DashboardViewProps {
   salesReps: UserProfile[];
   currentUser: UserProfile;
   language: Language;
-  onNavigateTab: (tab: 'dashboard' | 'stores' | 'tasks' | 'promotions' | 'newProducts' | 'tracking' | 'excel' | 'more') => void;
+  onNavigateTab: (tab: 'dashboard' | 'coverage' | 'stores' | 'tasks' | 'promotions' | 'newProducts' | 'tracking' | 'excel' | 'more') => void;
   onOpenNewTaskModal?: () => void;
   onOpenNewStoreModal?: () => void;
   onRefreshData?: () => void;
@@ -284,6 +285,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </motion.button>;
         })}
       </div>
+
+      <CoverageOverview stores={stores} user={currentUser} language={language} onOpen={()=>onNavigateTab('coverage')}/>
 
       {/* 4. Quick Actions Row */}
       <div className="dashboard-quick-actions calm-surface p-2.5 rounded-3xl flex items-center justify-between gap-2">

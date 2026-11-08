@@ -13,14 +13,15 @@ import {
   TrendingUp,
   Settings,
   X,
-  PackagePlus
+  PackagePlus,
+  ClipboardCheck
 } from 'lucide-react';
 import { UserProfile, Language } from '../types';
 import { translations } from '../i18n/translations';
 import { motion } from 'motion/react';
 import { triggerHaptic } from '../utils/haptics';
 
-export type NavTab = 'dashboard' | 'stores' | 'tasks' | 'promotions' | 'newProducts' | 'tracking' | 'excel' | 'dbReview' | 'more' | 'users';
+export type NavTab = 'dashboard' | 'coverage' | 'stores' | 'tasks' | 'promotions' | 'newProducts' | 'tracking' | 'excel' | 'dbReview' | 'more' | 'users';
 
 interface SidebarProps {
   connected?: boolean;
@@ -86,6 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'dashboard' as NavTab, label: language === 'lo' ? 'ໜ້າຫຼັກ (Home)' : 'Home Dashboard', icon: LayoutDashboard },
     { id: 'stores' as NavTab, label: t.navStores, icon: Store },
+    { id: 'coverage' as NavTab, label: language==='lo'?'Coverage ຢ້ຽມຢາມຮ້ານ':'Visit Coverage', icon: ClipboardCheck },
     {
       id: 'tasks' as NavTab,
       label: t.navTasks,
