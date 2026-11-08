@@ -169,7 +169,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .connection-status { font-size: 10px; padding: 4px 16px; color: var(--color-primary); }
 /* Keep the content shell free of transforms/animation fill so fixed dialogs
    stay anchored to the viewport and above the sidebar, even on long lists. */
-.mobile-dock > div { box-shadow: 0 12px 45px #153e3424; background: color-mix(in srgb,var(--color-surface) 96%,transparent); backdrop-filter: blur(18px); border-radius: 26px; padding: 8px 5px; }
+.mobile-dock { background: #146c4b; border-top: 1px solid #ffffff20; padding: 6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px)); }
+.mobile-dock > div { width: 100%; border-radius: 0; padding: 0; }
 .mobile-dock button { min-height: 54px; gap: 7px; }
 .mobile-dock button[aria-current=page] { background: var(--color-surface-secondary); }
 .mobile-dock button span:last-child { line-height: 1.5; font-size: 10px; max-width: 100%; }
@@ -198,7 +199,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .app-topbar > div > div:last-child > button[title*="Supabase"],
   .app-topbar > div > div:last-child > button[title*="Logo"],
   .app-topbar > div > div:last-child > button[title*="ໂລໂກ້"] { display: none; }
-  .app-content { padding: 18px 16px; }
+  .app-content { padding: 16px max(12px,env(safe-area-inset-right,0px)) 16px max(12px,env(safe-area-inset-left,0px)); }
   .dashboard-hero { min-height: 194px; padding: 21px; }
   .dashboard-hero h2 { font-size: 24px; }
   .dashboard-hero .field-art { width: 43%; }
@@ -522,3 +523,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
  .pwa-install-copy h3 { font-size: 15px; }
  .pwa-install-button { width: 100%; }
 }
+
+/* Installed PWA fills the available display; keep controls clear of cutouts. */
+.app-shell { min-height: 100dvh; }
+.app-topbar { padding-top: env(safe-area-inset-top,0px); padding-left: env(safe-area-inset-left,0px); padding-right: env(safe-area-inset-right,0px); }
+@media (max-width: 1023px) {
+ .app-body { padding-bottom: calc(82px + env(safe-area-inset-bottom,0px)); }
+ .connection-status-online { display: none; }
+ .connection-status-offline { padding-top: calc(4px + env(safe-area-inset-top,0px)); }
+}
+@media (display-mode: fullscreen) {
+ html,body { background-color: #146c4b; }
+}
+
+.account-modal-backdrop { padding: max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px)); }
+.account-modal { max-height: calc(100dvh - max(16px,env(safe-area-inset-top,0px)) - max(16px,env(safe-area-inset-bottom,0px))); }

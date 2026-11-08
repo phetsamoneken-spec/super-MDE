@@ -198,8 +198,8 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col font-sans transition-colors duration-200">
-      {supabaseEnabled && <div role="status" className="connection-status px-4 py-2 text-xs text-center bg-[var(--color-surface-secondary)]">
+    <div className="app-shell min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col font-sans transition-colors duration-200">
+      {supabaseEnabled && <div role="status" className={`connection-status ${syncState.status === 'offline' ? 'connection-status-offline' : 'connection-status-online'} px-4 py-2 text-xs text-center bg-[var(--color-surface-secondary)]`}>
         {syncState.status === 'offline' ? (language === 'lo' ? 'Offline: ການແກ້ໄຂເກັບໃນເຄື່ອງ ຈົນກວ່າຈະເຊື່ອມຕໍ່.' : 'Offline: edits stay on this device until reconnected.') : (language === 'lo' ? 'ເຊື່ອມຕໍ່ Supabase' : 'Connected to Supabase')}
       </div>}
       {supabaseEnabled && (syncState.status === 'saving' || syncState.status === 'loading' || syncState.status === 'error') && <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4"><section role={syncState.status === 'error' ? 'alertdialog' : 'status'} aria-modal="true" className="calm-card rounded-3xl max-w-lg p-5 space-y-4">
@@ -224,7 +224,7 @@ export default function App() {
       />
 
       {/* Main Body with Sidebar + Content View */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto pb-36 lg:pb-8">
+      <div className="app-body flex-1 flex w-full lg:pb-8">
         
         {/* Desktop Sidebar / Mobile Drawer */}
         <Sidebar

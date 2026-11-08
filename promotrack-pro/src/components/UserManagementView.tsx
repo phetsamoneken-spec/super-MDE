@@ -720,18 +720,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Mobile Floating Action Button (FAB) for adding user */}
-      <div className="lg:hidden fixed bottom-20 right-4 z-30 pointer-events-auto">
-        <motion.button
-          whileTap={{ scale: 0.86 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-          onClick={openAddModal}
-          className="w-13 h-13 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white shadow-lg shadow-emerald-950/25 flex items-center justify-center border-2 border-white/20 active:shadow-sm"
-          aria-label="Add new user"
-        >
-          <UserPlus className="w-6 h-6 stroke-[2.5]" />
-        </motion.button>
-      </div>
+
 
     </div>
   );

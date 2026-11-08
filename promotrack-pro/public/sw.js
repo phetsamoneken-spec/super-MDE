@@ -3,7 +3,7 @@
  * Version: promotrack-v1.0.0
  */
 
-const CACHE_NAME = `promotrack-shell-v5:${self.registration.scope}`;
+const CACHE_NAME = `promotrack-shell-v6:${self.registration.scope}`;
 const APP_ROOT = self.registration.scope;
 const STATIC_ASSETS = [
   './',

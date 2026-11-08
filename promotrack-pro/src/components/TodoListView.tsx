@@ -255,7 +255,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
         <motion.button
           whileTap={{ scale: 0.92 }}
           onClick={openNewTaskModal}
-          className="hidden sm:flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition active:scale-95"
+          className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition active:scale-95"
         >
           <Plus className="w-4 h-4" />
           <span>{t.newTask}</span>
@@ -734,18 +734,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Mobile Floating Action Button (FAB) with tactile response */}
-      <div className="lg:hidden fixed bottom-20 right-4 z-30 pointer-events-auto">
-        <motion.button
-          whileTap={{ scale: 0.86 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-          onClick={openNewTaskModal}
-          className="w-13 h-13 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white shadow-lg shadow-emerald-950/25 flex items-center justify-center border-2 border-white/20 active:shadow-sm"
-          aria-label="Add new task"
-        >
-          <Plus className="w-6 h-6 stroke-[2.5]" />
-        </motion.button>
-      </div>
+
 
     </div>
   );

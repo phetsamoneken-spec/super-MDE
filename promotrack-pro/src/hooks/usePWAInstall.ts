@@ -10,9 +10,9 @@ interface BeforeInstallPromptEvent extends Event {
 const listeners = new Set<() => void>();
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
 const inBrowser = typeof window !== 'undefined';
-const standalone = () => inBrowser && (window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & {standalone?:boolean}).standalone === true);
+const installedDisplayMode = () => inBrowser && (window.matchMedia('(display-mode: fullscreen)').matches || window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & {standalone?:boolean}).standalone === true);
 const isIOS = inBrowser && (/iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
-let state = { isInstallable: false, isInstalled: standalone(), isIOS };
+let state = { isInstallable: false, isInstalled: installedDisplayMode(), isIOS };
 const serverState = { isInstallable: false, isInstalled: false, isIOS: false };
 const emit = (patch: Partial<typeof state>) => { state = {...state, ...patch}; listeners.forEach(listener => listener()); };
 if (inBrowser) {
@@ -25,7 +25,9 @@ if (inBrowser) {
     deferredPrompt = null;
     emit({isInstalled: true, isInstallable: false});
   });
-  window.matchMedia('(display-mode: standalone)').addEventListener('change', () => emit({isInstalled: standalone()}));
+  for (const mode of ['standalone','fullscreen']) {
+    window.matchMedia(`(display-mode: ${mode})`).addEventListener('change', () => emit({isInstalled: installedDisplayMode()}));
+  }
 }
 const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
 const install = async () => {

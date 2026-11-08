@@ -5,10 +5,10 @@
   "description": "Sales Promotion Tracking & Store Order Management with To-Do List, bilingual Lao-English support, and offline drafts.",
   "start_url": "./",
   "scope": "./",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "portrait",
-  "background_color": "#064e3b",
-  "theme_color": "#059669",
+  "background_color": "#146c4b",
+  "theme_color": "#146c4b",
   "categories": [
     "business",
     "productivity",
@@ -39,5 +39,9 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "display_override": [
+    "fullscreen",
+    "standalone"
   ]
 }

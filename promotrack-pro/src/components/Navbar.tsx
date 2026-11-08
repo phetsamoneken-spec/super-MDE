@@ -54,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <>
       <header className="app-topbar sticky top-0 z-40 w-full bg-[var(--color-surface)] border-b-2 border-[var(--color-border)] shadow-xs transition-colors">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-2 sm:gap-3">
+        <div className="w-full px-3 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-2 sm:gap-3">
           
           {/* Left: Mobile hamburger & Brand */}
           <div className="flex items-center gap-2 sm:gap-3">
