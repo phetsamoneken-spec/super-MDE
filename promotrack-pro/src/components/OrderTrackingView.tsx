@@ -1,5 +1,7 @@
 import { LaoDatePicker } from './LaoDatePicker';
 import { purchaseTone } from '../utils/purchaseTone';
+import { campaignMdeStores } from '../utils/campaignMde';
+import { CampaignMdeFilter, CampaignTrackingSummary } from './CampaignMdeFilter';
 import React, { useState, useMemo } from 'react';
 import {
   TrendingUp,
@@ -28,6 +30,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { triggerHaptic } from '../utils/haptics';
 
 interface OrderTrackingViewProps {
+  mdeFilter:string;onMdeFilterChange:(value:string)=>void;
   promotions: Promotion[];
   stores: Store[];
   promoStores: PromotionStore[];
@@ -40,6 +43,7 @@ interface OrderTrackingViewProps {
 }
 
 export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
+  mdeFilter,onMdeFilterChange,
   promotions,
   stores,
   promoStores,
@@ -80,6 +84,10 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
   const storeMap = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores]);
   const promoMap = useMemo(() => new Map(promotions.map((p) => [p.id, p])), [promotions]);
   const userMap = useMemo(() => new Map(dataService.getAllUsers().map((u) => [u.id, u.fullName])), []);
+  const owners=useMemo(()=>dataService.getAllUsers(),[stores,salesReps,currentUser]);
+  const scopedStores=useMemo(()=>campaignMdeStores(stores,currentUser,mdeFilter,owners),[stores,currentUser,mdeFilter,owners]);
+  const scopeIds=useMemo(()=>new Set(scopedStores.map(store=>store.id)),[scopedStores]);
+  const scopeRecords=useMemo(()=>promoStores.filter(record=>scopeIds.has(record.storeId)&&promoMap.has(record.promotionId)&&(selectedPromoId==='all'||record.promotionId===selectedPromoId)&&(selectedSubChannel==='all'||storeMap.get(record.storeId)?.subChannel===selectedSubChannel)),[promoStores,scopeIds,promoMap,selectedPromoId,selectedSubChannel,storeMap]);
 
   // Unique Sub-Channels from stores
   const allSubChannels = useMemo(() => {
@@ -92,7 +100,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
 
   // Filtered tracking list
   const filteredRecords = useMemo(() => {
-    return promoStores.filter((ps) => {
+    return scopeRecords.filter((ps) => {
       const store = storeMap.get(ps.storeId);
       if (!store) return false;
 
@@ -113,7 +121,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
 
       return true;
     });
-  }, [promoStores, storeMap, selectedPromoId, selectedSubChannel, selectedStatus, searchQuery]);
+  }, [scopeRecords, storeMap, selectedPromoId, selectedSubChannel, selectedStatus, searchQuery]);
 
   // Open status modal
   const openStatusModal = (record: PromotionStore) => {
@@ -204,7 +212,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
           whileTap={{ scale: 0.92 }}
           onClick={() => {
             triggerHaptic('light');
-            dataService.exportPromotionResultsToExcel(selectedPromoId !== 'all' ? selectedPromoId : undefined);
+            dataService.exportPromotionResultsToExcel(selectedPromoId !== 'all' ? selectedPromoId : undefined,new Set(filteredRecords.map(record=>record.id)));
           }}
           className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-100 transition shadow-xs"
         >
@@ -214,6 +222,8 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
       </div>
 
       {/* Filters */}
+      <CampaignMdeFilter user={currentUser} mdes={salesReps} value={mdeFilter} language={language} onChange={value=>{onMdeFilterChange(value);setSelectedSubChannel('all');setSelectedStatus('all');setSearchQuery('');}}/>
+      {currentUser.role==='admin'&&<CampaignTrackingSummary records={scopeRecords} language={language}/>}
       <div className="glass-panel p-3.5 sm:p-4 rounded-3xl shadow-sm space-y-2.5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
           
@@ -223,7 +233,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
               {language === 'lo' ? 'ເລືອກໂປຣໂມຊັ່ນ' : 'Select Promotion'}
             </label>
             <select
-              value={selectedPromoId}
+              aria-label={language==='lo'?'ໂປຣໂມຊັ່ນ':'Promotion'} value={selectedPromoId}
               onChange={(e) => {
                 triggerHaptic('light');
                 setSelectedPromoId(e.target.value);
@@ -243,7 +253,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
               {language === 'lo' ? 'ເລືອກ Sub-Channel' : 'Sub-Channel'}
             </label>
             <select
-              value={selectedSubChannel}
+              aria-label="Sub-Channel" value={selectedSubChannel}
               onChange={(e) => {
                 triggerHaptic('light');
                 setSelectedSubChannel(e.target.value);
@@ -263,7 +273,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
               {language === 'lo' ? 'ສະຖານະການສັ່ງຊື້' : 'Order Status'}
             </label>
             <select
-              value={selectedStatus}
+              aria-label={language==='lo'?'ສະຖານະ':'Order Status'} value={selectedStatus}
               onChange={(e) => {
                 triggerHaptic('light');
                 setSelectedStatus(e.target.value);

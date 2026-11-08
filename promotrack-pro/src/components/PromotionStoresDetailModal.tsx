@@ -1,4 +1,5 @@
 import { CampaignImage } from './CampaignImage';
+import { CampaignMdeFilter } from './CampaignMdeFilter';
 import React, { useState, useMemo } from 'react';
 import {
   X,
@@ -33,6 +34,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { triggerHaptic } from '../utils/haptics';
 
 interface PromotionStoresDetailModalProps {
+  mdeFilter?:string;onMdeFilterChange?:(value:string)=>void;
   promotion: Promotion | null;
   isOpen: boolean;
   onClose: () => void;
@@ -48,6 +50,7 @@ interface PromotionStoresDetailModalProps {
 }
 
 export const PromotionStoresDetailModal: React.FC<PromotionStoresDetailModalProps> = ({
+  mdeFilter='all',onMdeFilterChange,
   promotion,
   isOpen,
   onClose,
@@ -204,7 +207,7 @@ export const PromotionStoresDetailModal: React.FC<PromotionStoresDetailModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-xs p-0 sm:p-4">
+    <div role="dialog" aria-modal="true" aria-label={language==='lo'?'ລາຍລະອຽດໂປຣໂມຊັ່ນ':'Promotion details'} className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-xs p-0 sm:p-4">
       <motion.div
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -302,6 +305,7 @@ export const PromotionStoresDetailModal: React.FC<PromotionStoresDetailModalProp
           )}
 
           {/* 3. KPI Summary Cards */}
+          {onMdeFilterChange&&<CampaignMdeFilter user={currentUser} mdes={salesReps} value={mdeFilter} language={language} onChange={value=>{onMdeFilterChange(value);setSubChannelFilter('all');setSearchQuery('');setActiveTab('All');}}/>}
           <div className="grid grid-cols-3 gap-2">
             {/* Total Stores */}
             <div className="calm-card p-3 rounded-2xl text-center">

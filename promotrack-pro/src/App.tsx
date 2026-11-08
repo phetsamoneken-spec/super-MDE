@@ -36,6 +36,7 @@ import { CoverageView } from './components/CoverageView';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { WifiOff } from 'lucide-react';
 import { AppLoadingScreen, SyncActivity } from './components/AppLoadingScreen';
+import { storeMdeId } from './utils/campaignMde';
 
 export default function App() {
   // Authentication State
@@ -43,6 +44,8 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile>(dataService.getCurrentUser());
   const [appBranding, setAppBranding] = useState<AppBranding>(dataService.getAppBranding());
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
+  const [campaignMdeFilter,setCampaignMdeFilter]=useState('all');
+  useEffect(()=>setCampaignMdeFilter('all'),[currentUser.id]);
   const [language, setLanguage] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem('promotrack_lang');
@@ -161,11 +164,16 @@ export default function App() {
 
   const [selectedNewProduct, setSelectedNewProduct] = useState<{productId:string;storeId?:string}>();
   useEffect(() => { if(currentTab !== 'newProducts') setSelectedNewProduct(undefined); }, [currentTab]);
+  const selectCampaignMdeForStore=(storeId?:string)=>{
+    if(storeId&&currentUser.role==='admin'){const store=stores.find(item=>item.id===storeId),owner=store?storeMdeId(store,dataService.getAllUsers()):'';setCampaignMdeFilter(salesReps.some(rep=>rep.id===owner)?owner:'all');}
+  };
   const handleOpenNewProductOrders = (productId:string, storeId?:string) => {
+    selectCampaignMdeForStore(storeId);
     setSelectedNewProduct({productId,storeId});setCurrentTab('newProducts');
   };
 
-  const handleOpenTrackingForPromo = (promoId: string) => {
+  const handleOpenTrackingForPromo = (promoId: string,storeId?:string) => {
+    selectCampaignMdeForStore(storeId);
     setSelectedPromotionForTracking(promoId);
     setCurrentTab('tracking');
   };
@@ -303,6 +311,7 @@ export default function App() {
           {/* Tab 3: Promotions Management */}
           {currentTab === 'promotions' && (
             <PromotionsView
+              salesReps={salesReps} mdeFilter={campaignMdeFilter} onMdeFilterChange={setCampaignMdeFilter}
               promotions={promotions}
               stores={stores}
               promoStores={promoStores}
@@ -316,6 +325,7 @@ export default function App() {
           {/* Tab: New Product Launches & Order Tracking */}
           {currentTab === 'newProducts' && (
             <NewProductsView
+              salesReps={salesReps} mdeFilter={campaignMdeFilter} onMdeFilterChange={setCampaignMdeFilter}
               initialProductId={selectedNewProduct?.productId}
               initialStoreId={selectedNewProduct?.storeId}
               onManageSubChannels={() => setIsSubChannelManagerOpen(true)}
@@ -332,6 +342,7 @@ export default function App() {
           {/* Tab 4: Order Tracking */}
           {currentTab === 'tracking' && (
             <OrderTrackingView
+              mdeFilter={campaignMdeFilter} onMdeFilterChange={setCampaignMdeFilter}
               promotions={promotions}
               stores={stores}
               promoStores={promoStores}

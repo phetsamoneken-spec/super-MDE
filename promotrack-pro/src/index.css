@@ -3,6 +3,7 @@
 @import "./components/sidebar.css";
 @import "./components/loading.css";
 @import "./components/calendar.css";
+@import "./components/campaign-mde.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Serve Lao glyphs with the app so they also work without Google Fonts. */

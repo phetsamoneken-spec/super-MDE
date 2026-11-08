@@ -1486,11 +1486,11 @@ class DataService {
     XLSX.writeFile(wb, `Stores_Export_${new Date().toISOString().substring(0, 10)}.xlsx`);
   }
 
-  public exportPromotionResultsToExcel(promotionId?: string) {
-    const pStores = this.getPromotionStores(promotionId);
+  public exportPromotionResultsToExcel(promotionId?: string,recordIds?:ReadonlySet<string>) {
+    const pStores = this.getPromotionStores(promotionId).filter(record=>!recordIds||recordIds.has(record.id));
     const allStores = new Map(this.getAllStoresUnfiltered().map((s) => [s.id, s]));
     const allPromos = new Map(this.getAllPromotionsUnfiltered().map((p) => [p.id, p]));
-    const allUsers = new Map(this.getAllUsers().map((u) => [u.id, u.fullName]));
+    const allUsers = new Map([...this.getSalesReps(),...this.getAllUsers()].map((u) => [u.id, u.fullName]));
 
     const data = pStores.map((ps) => {
       const store = allStores.get(ps.storeId);

@@ -1,0 +1,18 @@
+.campaign-mde-filter { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 18px; border: 1px solid #c9dfd3; border-radius: 22px; background: linear-gradient(110deg,#edf7f0,var(--color-surface)); color: var(--color-text-primary); }
+.campaign-mde-copy { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.campaign-mde-icon { display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; border-radius: 14px; background: #dcefe4; color: #006b4f; }
+.campaign-mde-copy strong { font-size: 14px; font-weight: 800; line-height: 1.8; }
+.campaign-mde-copy p { color: var(--color-text-secondary); font-size: 11px; line-height: 1.8; }
+.campaign-mde-filter label { display: grid; gap: 5px; font-size: 10px; color: var(--color-text-secondary); min-width: 200px; }
+.campaign-mde-filter select { min-height: 44px; width: 100%; border-radius: 12px; border: 1px solid var(--color-border); padding: 9px 12px; background: var(--color-surface); color: var(--color-text-primary); font-size: 12px; font-weight: 700; }
+.campaign-tracking-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.campaign-tracking-summary > div { min-width: 0; padding: 15px; border: 1px solid var(--color-border); border-radius: 19px; background: var(--color-surface); }
+.campaign-tracking-summary span { display: block; color: var(--color-text-secondary); font-size: 10px; line-height: 1.9; }
+.campaign-tracking-summary strong { display: block; font-size: 23px; font-weight: 800; color: var(--color-text-primary); line-height: 1.7; overflow-wrap: anywhere; }
+.campaign-tracking-summary > div:nth-child(2) strong { color: #13845b; }
+.campaign-tracking-summary > div:nth-child(3) strong { color: #b36a1b; }
+.dark .campaign-mde-filter { background: linear-gradient(110deg,#193b2b,var(--color-surface)); border-color: #31513e; }
+.dark .campaign-mde-icon { background: #28513a; color: #b8e4cc; }
+.dark .campaign-tracking-summary > div:nth-child(2) strong { color: #92d7b1; }
+.dark .campaign-tracking-summary > div:nth-child(3) strong { color: #f1c18c; }
+@media(max-width:639px) { .campaign-mde-filter label { width: 100%; min-width: 0; } .campaign-tracking-summary { grid-template-columns: repeat(2,minmax(0,1fr)); } .campaign-tracking-summary strong { font-size: 21px; } }

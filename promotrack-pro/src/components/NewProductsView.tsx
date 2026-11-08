@@ -1,7 +1,9 @@
 import { LaoDatePicker } from './LaoDatePicker';
 import { purchaseTone } from '../utils/purchaseTone';
 import { CampaignImage } from './CampaignImage';
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { campaignMdeStores } from '../utils/campaignMde';
+import { CampaignMdeFilter } from './CampaignMdeFilter';
 import {
   Sparkles,
   PackagePlus,
@@ -43,6 +45,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { triggerHaptic } from '../utils/haptics';
 
 interface NewProductsViewProps {
+  salesReps:UserProfile[];mdeFilter:string;onMdeFilterChange:(value:string)=>void;
   initialProductId?: string;
   initialStoreId?: string;
   onManageSubChannels: () => void;
@@ -58,6 +61,7 @@ interface NewProductsViewProps {
 const PRESET_PRODUCT_IMAGES = [''];
 
 export const NewProductsView: React.FC<NewProductsViewProps> = ({
+  salesReps,mdeFilter,onMdeFilterChange,
   initialProductId,
   initialStoreId,
   onManageSubChannels,
@@ -138,6 +142,13 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
   // Maps
   const storeMap = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores]);
   const productMap = useMemo(() => new Map(newProducts.map((p) => [p.id, p])), [newProducts]);
+  const owners=useMemo(()=>dataService.getAllUsers(),[stores,salesReps,currentUser]);
+  const scopedStores=useMemo(()=>campaignMdeStores(stores,currentUser,mdeFilter,owners),[stores,currentUser,mdeFilter,owners]);
+  const scopeIds=useMemo(()=>new Set(scopedStores.map(store=>store.id)),[scopedStores]);
+  const scopedOrders=useMemo(()=>storeOrders.filter(order=>scopeIds.has(order.storeId)&&productMap.has(order.productId)),[storeOrders,scopeIds,productMap]);
+  const trackingScopeOrders=useMemo(()=>scopedOrders.filter(order=>(focusedStoreId==='all'||order.storeId===focusedStoreId)&&(selectedProductId==='all'||order.productId===selectedProductId)&&(subChannelFilter==='all'||storeMap.get(order.storeId)?.subChannel===subChannelFilter)),[scopedOrders,focusedStoreId,selectedProductId,subChannelFilter,storeMap]);
+  useEffect(()=>{if(focusedStoreId!=='all'&&!scopeIds.has(focusedStoreId))setFocusedStoreId('all');},[scopeIds,focusedStoreId]);
+  const statsOrders=activeViewTab==='tracking'?trackingScopeOrders:scopedOrders;
 
   // Include registered Sub-channels even before their first store is assigned.
   const allSubChannels = (() => {
@@ -186,7 +197,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
 
   // Filtered Store Orders for Tracking
   const filteredOrders = useMemo(() => {
-    return storeOrders.filter((order) => {
+    return trackingScopeOrders.filter((order) => {
       const store = storeMap.get(order.storeId);
       if (!store) return false;
 
@@ -205,23 +216,24 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
 
       return true;
     });
-  }, [storeOrders, storeMap, focusedStoreId, selectedProductId, subChannelFilter, orderStatusFilter, trackingSearch]);
+  }, [trackingScopeOrders, storeMap, focusedStoreId, selectedProductId, subChannelFilter, orderStatusFilter, trackingSearch]);
 
   // Aggregate stats for New Products
   const overallStats = useMemo(() => {
-    const totalOrdered = storeOrders.filter((o) => o.orderStatus === 'Ordered');
-    const totalSamples = storeOrders.filter((o) => o.orderStatus === 'Sample Provided');
-    const totalFollowUp = storeOrders.filter((o) => o.orderStatus === 'Follow-up Required');
+    const assignedProducts=new Set(statsOrders.map(order=>order.productId));
+    const totalOrdered = statsOrders.filter((o) => o.orderStatus === 'Ordered');
+    const totalSamples = statsOrders.filter((o) => o.orderStatus === 'Sample Provided');
+    const totalFollowUp = statsOrders.filter((o) => o.orderStatus === 'Follow-up Required');
     const totalUnits = totalOrdered.reduce((acc, o) => acc + (o.orderQuantity || 0), 0);
     const totalAmount = totalOrdered.reduce((acc, o) => acc + (o.orderAmount || 0), 0);
 
-    const penetrationRate = storeOrders.length > 0
-      ? Math.round((totalOrdered.length / storeOrders.length) * 100)
+    const penetrationRate = statsOrders.length > 0
+      ? Math.round((totalOrdered.length / statsOrders.length) * 100)
       : 0;
 
     return {
-      activeProductsCount: newProducts.filter((p) => p.status === 'Active').length,
-      totalStoreAssignments: storeOrders.length,
+      activeProductsCount: newProducts.filter((p) => p.status === 'Active'&&((mdeFilter==='all'&&(activeViewTab==='catalog'||selectedProductId==='all'))||assignedProducts.has(p.id))).length,
+      totalStoreAssignments: statsOrders.length,
       orderedCount: totalOrdered.length,
       samplesCount: totalSamples.length,
       followUpCount: totalFollowUp,
@@ -229,7 +241,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
       totalAmount,
       penetrationRate
     };
-  }, [newProducts, storeOrders]);
+  }, [newProducts, statsOrders,mdeFilter,activeViewTab,selectedProductId]);
 
   // Handle open create modal
   const openCreateModal = () => {
@@ -563,11 +575,11 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
             >
               <CheckSquare className="w-3.5 h-3.5" />
               <span>{language === 'lo' ? 'ຕິດຕາມການສັ່ງຊື້' : 'Track Orders'}</span>
-              {storeOrders.length > 0 && (
+              {scopedOrders.length > 0 && (
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
                   activeViewTab === 'tracking' ? 'bg-white text-[var(--color-primary-dark)]' : 'bg-[var(--color-primary)] text-white'
                 }`}>
-                  {storeOrders.length}
+                  {scopedOrders.length}
                 </span>
               )}
             </motion.button>
@@ -593,7 +605,8 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
       </div>
 
       {/* KPI Performance Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      <CampaignMdeFilter user={currentUser} mdes={salesReps} value={mdeFilter} language={language} onChange={value=>{onMdeFilterChange(value);setFocusedStoreId('all');setSubChannelFilter('all');setOrderStatusFilter('all');setTrackingSearch('');}}/>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" aria-label={language==='lo'?'ສະຫຼຸບສິນຄ້າໃໝ່':'New product summary'} role="region">
         <div className="calm-card p-3 rounded-2xl">
           <span className="text-[10px] uppercase font-bold text-[var(--color-text-secondary)] block">
             {language === 'lo' ? 'ສິນຄ້າເປີດຕົວ' : 'Active Launches'}
@@ -697,7 +710,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
           {/* Product Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {filteredProducts.map((product) => {
-              const productOrders = storeOrders.filter((o) => o.productId === product.id);
+              const productOrders = scopedOrders.filter((o) => o.productId === product.id);
               const orderedStores = productOrders.filter((o) => o.orderStatus === 'Ordered');
               const sampleStores = productOrders.filter((o) => o.orderStatus === 'Sample Provided');
               const pendingStores = productOrders.filter((o) => o.orderStatus === 'Not Ordered' || o.orderStatus === 'Follow-up Required');
@@ -873,7 +886,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                   {language === 'lo' ? 'ເລືອກສິນຄ້າໃໝ່:' : 'Filter by Product:'}
                 </label>
                 <select
-                  value={selectedProductId}
+                  aria-label={language==='lo'?'ສິນຄ້າ':'Product'} value={selectedProductId}
                   onChange={(e) => setSelectedProductId(e.target.value)}
                   className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
                 >
@@ -892,7 +905,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                   {language === 'lo' ? 'ກອງຕາມ Sub-Channel:' : 'Filter by Sub-Channel:'}
                 </label>
                 <select
-                  value={subChannelFilter}
+                  aria-label="Sub-Channel" value={subChannelFilter}
                   onChange={(e) => setSubChannelFilter(e.target.value)}
                   className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
                 >

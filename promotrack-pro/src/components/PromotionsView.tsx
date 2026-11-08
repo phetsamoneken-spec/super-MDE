@@ -1,5 +1,7 @@
 import { LaoDatePicker } from './LaoDatePicker';
 import { CampaignImage } from './CampaignImage';
+import { CampaignMdeFilter } from './CampaignMdeFilter';
+import { campaignMdeStores } from '../utils/campaignMde';
 import React, { useState, useMemo } from 'react';
 import {
   Tag,
@@ -27,6 +29,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { triggerHaptic } from '../utils/haptics';
 
 interface PromotionsViewProps {
+  salesReps:UserProfile[];mdeFilter:string;onMdeFilterChange:(value:string)=>void;
   promotions: Promotion[];
   stores: StoreType[];
   promoStores: PromotionStore[];
@@ -37,6 +40,7 @@ interface PromotionsViewProps {
 }
 
 export const PromotionsView: React.FC<PromotionsViewProps> = ({
+  salesReps,mdeFilter,onMdeFilterChange,
   promotions,
   stores,
   promoStores,
@@ -46,6 +50,10 @@ export const PromotionsView: React.FC<PromotionsViewProps> = ({
   onOpenTracking
 }) => {
   const t = translations[language];
+  const owners=useMemo(()=>dataService.getAllUsers(),[stores,salesReps,currentUser]);
+  const scopedStores=useMemo(()=>campaignMdeStores(stores,currentUser,mdeFilter,owners),[stores,currentUser,mdeFilter,owners]);
+  const scopeIds=useMemo(()=>new Set(scopedStores.map(store=>store.id)),[scopedStores]);
+  const scopedPromoStores=useMemo(()=>promoStores.filter(record=>scopeIds.has(record.storeId)),[promoStores,scopeIds]);
 
   const [statusFilter, setStatusFilter] = useState<'All' | PromotionStatus>('All');
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -313,9 +321,10 @@ export const PromotionsView: React.FC<PromotionsViewProps> = ({
       </div>
 
       {/* Promotion Cards Grid */}
+      <CampaignMdeFilter user={currentUser} mdes={salesReps} value={mdeFilter} onChange={onMdeFilterChange} language={language}/>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         {filteredPromotions.map((promo) => {
-          const pStores = promoStores.filter((ps) => ps.promotionId === promo.id);
+          const pStores = scopedPromoStores.filter((ps) => ps.promotionId === promo.id);
           const totalParticipating = pStores.length;
           const orderedStores = pStores.filter((ps) => ps.orderStatus === 'Ordered').length;
           const followUpStores = pStores.filter((ps) => ps.orderStatus === 'Follow-up Required').length;
@@ -917,12 +926,13 @@ export const PromotionsView: React.FC<PromotionsViewProps> = ({
       {/* Promotion Stores Detail Modal (Shows all stores that ordered this promotion) */}
       <PromotionStoresDetailModal
         promotion={selectedDetailPromotion}
+        mdeFilter={mdeFilter} onMdeFilterChange={onMdeFilterChange}
         isOpen={Boolean(selectedDetailPromotion)}
         onClose={() => setSelectedDetailPromotion(null)}
-        stores={stores}
-        promoStores={promoStores}
+        stores={scopedStores}
+        promoStores={scopedPromoStores}
         currentUser={currentUser}
-        salesReps={dataService.getSalesReps()}
+        salesReps={salesReps}
         language={language}
         onRefreshData={onRefreshData}
         onOpenTracking={(promoId) => {
