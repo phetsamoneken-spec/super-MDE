@@ -875,6 +875,16 @@ $$;
 REVOKE ALL ON FUNCTION public.outlet_visit_coverage(DATE,DATE) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.outlet_visit_coverage(DATE,DATE) TO authenticated;
 
+
+-- 20261108030000_outlet_visit_function_grants.sql
+-- Supabase projects can grant anon EXECUTE through default privileges.
+-- Revoke its explicit grant as well as PUBLIC; invoker RLS remains in force.
+
+REVOKE ALL ON FUNCTION public.can_record_outlet_visit(UUID,UUID) FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.outlet_visit_coverage(DATE,DATE) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.can_record_outlet_visit(UUID,UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.outlet_visit_coverage(DATE,DATE) TO authenticated;
+
 -- Generated only from data/outlet.xlsx. SHA-256: da6cfd7b9fd9177cf1c4cf44fc5b5ca266d6bb6b7358c92292664655098646bc
 -- Apply schema migrations first. No auth accounts, products, orders, tasks, or promotions are fabricated.
 -- Intended for the project selected by its owner; does not delete unrelated existing records.

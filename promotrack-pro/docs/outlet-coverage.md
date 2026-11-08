@@ -19,7 +19,7 @@ Implemented on `feat/outlet-visit-coverage`. The owner explicitly approved the a
 
 The approved production rollout uses these steps:
 
-1. Apply only the incremental migration to the designated project. Do not run fresh setup or seed against the existing project.
+1. Apply the incremental migrations `20261108020000_outlet_visit_coverage.sql` and `20261108030000_outlet_visit_function_grants.sql` to the designated project. The second explicitly revokes anonymous function access when Supabase default privileges grant it. Do not run fresh setup or seed against the existing project.
 2. Verify RLS, column/function grants and PostgREST schema visibility. The table initially contains no visits.
 3. Publish the reviewed feature commit through the existing main-branch workflow. Preserve retained premium-motion preview assets.
 4. Verify the live app loads and authenticated Coverage requests succeed. Real MDE users record actual visits.

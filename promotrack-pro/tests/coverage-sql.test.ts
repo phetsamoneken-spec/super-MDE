@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import data from '../src/data/outletDataset.json';
 const scaffold=`CREATE ROLE authenticated;CREATE ROLE anon;CREATE ROLE service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon,authenticated;
 CREATE SCHEMA auth;CREATE TABLE auth.users(id UUID PRIMARY KEY,email TEXT,email_confirmed_at TIMESTAMPTZ);
 CREATE FUNCTION auth.uid() RETURNS UUID LANGUAGE SQL STABLE AS $$ SELECT NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 CREATE SCHEMA storage;CREATE TABLE storage.buckets(id TEXT PRIMARY KEY,name TEXT,public BOOLEAN,file_size_limit BIGINT,allowed_mime_types TEXT[]);
@@ -56,7 +57,10 @@ test('Visit RLS, immutable identity, distinct coverage, historical ownership and
     }
     await as(admin);const full=(await db.query<{coverage:any[];kind:string}>("SELECT public.outlet_visit_coverage('2025-03-01','2025-03-31') AS coverage,pg_typeof(public.outlet_visit_coverage('2025-03-01','2025-03-31'))::text AS kind")).rows[0];
     assert.equal(full.kind,'jsonb');assert.equal(full.coverage.length,1178);
-    await db.exec('RESET ROLE; SET ROLE anon');await assert.rejects(db.query('SELECT * FROM public.outlet_visits'),/permission denied/);await assert.rejects(db.query("SELECT public.outlet_visit_coverage('2025-02-01','2025-02-28')"),/permission denied/);
+    await db.exec('RESET ROLE');
+    assert.equal((await db.query<{allowed:boolean}>("SELECT has_function_privilege('anon','public.outlet_visit_coverage(date,date)','EXECUTE') AS allowed")).rows[0].allowed,false);
+    assert.equal((await db.query<{allowed:boolean}>("SELECT has_function_privilege('anon','public.can_record_outlet_visit(uuid,uuid)','EXECUTE') AS allowed")).rows[0].allowed,false);
+    await db.exec('SET ROLE anon');await assert.rejects(db.query('SELECT * FROM public.outlet_visits'),/permission denied/);await assert.rejects(db.query("SELECT public.outlet_visit_coverage('2025-02-01','2025-02-28')"),/permission denied/);
     // A reassignment never credits the new MDE with the former MDE's visits.
     await db.exec('RESET ROLE');await db.query('UPDATE public.stores SET mde_id=$1 WHERE id=$2',[m2,own]);
     await as(a);assert.equal((await report()).length,0);
