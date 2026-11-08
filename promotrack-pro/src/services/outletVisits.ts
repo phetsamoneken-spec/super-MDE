@@ -12,6 +12,20 @@ function requireConnection() {
   if(!navigator.onLine)throw new Error('Connect to the internet to record or refresh visits.');
 }
 export const outletVisits={
+  async setVisited(storeId:string,mdeId:string,userId:string,period:VisitPeriod,visited:boolean,date:string):Promise<OutletCoverage[]> {
+    requireConnection();
+    if(visited){
+      try{await outletVisits.record(storeId,date,'');}
+      catch(error){if(!(error instanceof Error)||error.message!=='A visit is already recorded for this outlet and day.')throw error;}
+    }else{
+      const {data,error}=await supabase.from('outlet_visits').select('id,visited_by').eq('store_id',storeId).eq('mde_id',mdeId).gte('visited_on',period.start).lte('visited_on',period.end);
+      if(error)throw new Error(visitError(error));
+      if(data?.some(row=>row.visited_by!==userId))throw new Error('Another account recorded a visit in this period. Only that account can undo it.');
+      const removed=await supabase.from('outlet_visits').delete().eq('store_id',storeId).eq('mde_id',mdeId).eq('visited_by',userId).gte('visited_on',period.start).lte('visited_on',period.end);
+      if(removed.error)throw new Error(visitError(removed.error));
+    }
+    return outletVisits.coverage(period);
+  },
   async coverage(period:VisitPeriod,signal?:AbortSignal):Promise<OutletCoverage[]> {
     requireConnection();
     let query=supabase.rpc('outlet_visit_coverage',{p_start:period.start,p_end:period.end});

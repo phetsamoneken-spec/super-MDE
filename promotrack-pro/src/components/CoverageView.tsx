@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarCheck, CheckCircle2, ClipboardCheck, Download, History, MapPin, Plus, RefreshCw, Search, Tag, PackagePlus } from 'lucide-react';
+import { CalendarCheck, ClipboardCheck, Download, History, RefreshCw, Search, Tag, PackagePlus } from 'lucide-react';
 import type { Language, Store, UserProfile, Promotion, PromotionStore, NewProductLaunch, NewProductStoreOrder } from '../types';
 import { businessToday, campaignSummary, coverageStores, coverageSummary, validVisitDate, visitPeriod } from '../utils/coverage';
 import { useOutletCoverage } from '../hooks/useOutletCoverage';
@@ -8,6 +8,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { outletVisits } from '../services/outletVisits';
 import { AccountModalShell } from './AccountModalShell';
 import { OutletVisitHistory } from './OutletVisitHistory';
+import { CoverageOutletToggle } from './CoverageOutletToggle';
 
 type Props={stores:Store[];mdes:UserProfile[];user:UserProfile;language:Language;promotions:Promotion[];promoStores:PromotionStore[];products:NewProductLaunch[];productOrders:NewProductStoreOrder[];onOpenPromotion:(id:string)=>void;onOpenProduct:(id:string,storeId:string)=>void};
 const statusLabels:Record<string,string>={'Ordered':'ສັ່ງຊື້ແລ້ວ','Not Ordered':'ຍັງບໍ່ສັ່ງ','Follow-up Required':'ຕ້ອງຕິດຕາມ','Cancelled':'ຍົກເລີກ','Sample Provided':'ໃຫ້ຕົວຢ່າງແລ້ວ','Declined':'ປະຕິເສດ'};
@@ -18,7 +19,9 @@ export function CoverageView({stores,mdes,user,language,promotions,promoStores,p
   const [mode,setMode]=useState<'month'|'day'>('month'),[month,setMonth]=useState(today.slice(0,7)),[day,setDay]=useState(today);
   const [mde,setMde]=useState('all'),[search,setSearch]=useState(''),[filter,setFilter]=useState<'all'|'pending'|'visited'>('all'),[page,setPage]=useState(1);
   const period=visitPeriod(mode,mode==='month'?month:day);
-  const {rows,loading,error,refresh}=useOutletCoverage(period,user);
+  const {rows,loading,error,refresh,replaceRows}=useOutletCoverage(period,user);
+  const [toggling,setToggling]=useState(''),[toggleError,setToggleError]=useState(''),[toggleMessage,setToggleMessage]=useState('');
+  const toggleLock=useRef(false);
   const [recording,setRecording]=useState<Store>(),[history,setHistory]=useState<Store>(),[expanded,setExpanded]=useState<string>();
   const [date,setDate]=useState(''),[note,setNote]=useState(''),[saveError,setSaveError]=useState(''),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[exporting,setExporting]=useState(false);
   const scope=useMemo(()=>coverageStores(stores,user,mde),[stores,user.id,user.mdeId,user.role,mde]);
@@ -38,7 +41,7 @@ export function CoverageView({stores,mdes,user,language,promotions,promoStores,p
     return scope.filter(store=>{
       const visited=!!rowMap.get(`${store.id}:${store.mdeId}`)?.visitCount;
       return (filter==='all'||(filter==='visited'?visited:!visited))&&(!query||[store.storeName,store.storeCode,store.village,store.district,store.subChannel].some(value=>value?.toLocaleLowerCase().includes(query)));
-    }).sort((a,b)=>Number(!!rowMap.get(`${a.id}:${a.mdeId}`))-Number(!!rowMap.get(`${b.id}:${b.mdeId}`))||a.storeName.localeCompare(b.storeName,'lo'));
+    }).sort((a,b)=>a.storeName.localeCompare(b.storeName,'lo'));
   },[scope,rowMap,search,filter]);
   const totalPages=Math.max(1,Math.ceil(selected.length/50)),currentPage=Math.min(page,totalPages),visible=selected.slice((currentPage-1)*50,currentPage*50);
   const mdeSummaries=useMemo(()=>admin?mdes.map(rep=>{
@@ -49,16 +52,30 @@ export function CoverageView({stores,mdes,user,language,promotions,promoStores,p
   const goPage=(value:number)=>{setPage(value);directory.current?.scrollIntoView({block:'start'});};
   const reset=()=>{setPage(1);setNotice('');};
   const openRecord=(store:Store)=>{setRecording(store);setDate(mode==='day'?day:month===today.slice(0,7)?today:'');setNote('');setSaveError('');};
+  const toggleVisit=async(store:Store,visited:boolean)=>{
+    if(toggleLock.current||loading||!online||admin)return;
+    if(!visited&&mode==='month'&&month!==today.slice(0,7)){openRecord(store);return;}
+    toggleLock.current=true;setToggling(store.id);setToggleError('');setToggleMessage('');setNotice('');
+    try{
+      const next=await outletVisits.setVisited(store.id,store.mdeId!,user.id,period,!visited,mode==='day'?day:today);
+      replaceRows(next);
+      const stillVisited=next.some(row=>row.storeId===store.id&&row.mdeId===store.mdeId&&row.visitCount>0);
+      if(visited&&stillVisited)setToggleError(lao?'ຍັງມີບັນທຶກຢ້ຽມຢາມໃນໄລຍະນີ້. ກະລຸນາເບິ່ງປະຫວັດ.':'A visit remains in this period. Check its history.');
+      else setToggleMessage(visited?(lao?'ປັບເປັນຍັງບໍ່ຢ້ຽມຢາມແລ້ວ':'Marked not visited for this period.'):(lao?'ໝາຍວ່າຢ້ຽມຢາມແລ້ວ':'Marked visited.'));
+    }catch(cause){const message=cause instanceof Error?cause.message:'Could not update visit status.';setToggleError(lao&&message.startsWith('Another account')?'ບັນຊີອື່ນເປັນຜູ້ບັນທຶກການຢ້ຽມຢາມນີ້. ມີພຽງບັນຊີນັ້ນທີ່ຍົກເລີກໄດ້.':message);}
+    finally{toggleLock.current=false;setToggling('');}
+  };
   return <div className="coverage-page">
+    <span className="sr-only" role="status">{toggleMessage}</span>
     <header className="coverage-heading"><div><span className="coverage-kicker">SUPER MDE · COVERAGE</span><h2><ClipboardCheck size={27}/>{lao?'ຕິດຕາມການຢ້ຽມຢາມຮ້ານຄ້າ':'Outlet visit coverage'}</h2><p>{lao?'ຮ້ານບໍ່ຊ້ຳທີ່ຢ້ຽມຢາມແລ້ວ ÷ ຮ້ານທີ່ຮັບຜິດຊອບ × 100':'Unique visited outlets ÷ assigned outlets × 100'}</p></div>
-      <div className="coverage-header-actions"><button type="button" className="coverage-secondary" onClick={refresh} disabled={loading}><RefreshCw size={16}/>{lao?'ໂຫຼດໃໝ່':'Refresh'}</button><button type="button" className="coverage-secondary" disabled={loading||!!error||exporting||!selected.length} onClick={async()=>{
+      <div className="coverage-header-actions"><button type="button" className="coverage-secondary" onClick={refresh} disabled={loading||!!toggling}><RefreshCw size={16}/>{lao?'ໂຫຼດໃໝ່':'Refresh'}</button><button type="button" className="coverage-secondary" disabled={loading||!!error||exporting||!selected.length} onClick={async()=>{
         setExporting(true);try{const data=selected.map(store=>{const coverage=rowMap.get(`${store.id}:${store.mdeId}`),orders=campaigns.get(store.id);return {'OUTLET CODE':store.storeCode,'OUTLET NAME':store.storeName,'MDE':mdes.find(rep=>rep.id===store.mdeId)?.fullName||store.mdeName,'PERIOD START':period.start,'PERIOD END':period.end,'VISITED':coverage?.visitCount?'DONE':'NONE','VISITS':coverage?.visitCount||0,'LAST VISIT':coverage?.lastVisitedOn||'','PROMOTIONS ORDERED':orders?.promos.filter(row=>row.orderStatus==='Ordered').length||0,'PROMOTIONS ASSIGNED':orders?.promos.length||0,'NEW PRODUCTS ORDERED':orders?.products.filter(row=>row.orderStatus==='Ordered').length||0,'NEW PRODUCTS ASSIGNED':orders?.products.length||0};});const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.json_to_sheet(data),'Coverage');XLSX.writeFile(book,`coverage-${period.start}-${period.end}.xlsx`);}catch{setNotice(lao?'ສົ່ງອອກບໍ່ສຳເລັດ':'Export failed. Please retry.');}finally{setExporting(false);}
       }}><Download size={16}/>{exporting?'…':'Excel'}</button></div>
     </header>
 
     <div className="coverage-filters">
-      <div className="coverage-period-mode" role="group" aria-label={lao?'ຮູບແບບລາຍງານ':'Reporting period'}>{(['month','day'] as const).map(value=><button type="button" key={value} aria-pressed={mode===value} onClick={()=>{setMode(value);reset();}}>{value==='month'?(lao?'ລາຍເດືອນ':'Monthly'):(lao?'ລາຍວັນ':'Daily')}</button>)}</div>
-      <label>{lao?'ໄລຍະເວລາ':'Period'}{mode==='month'?<input aria-label={lao?'ໄລຍະເວລາ':'Period'} type="month" value={month} max={today.slice(0,7)} onChange={event=>{const value=event.target.value;if(validVisitDate(value+'-01')&&value.slice(0,7)===value&&value<=today.slice(0,7)){setMonth(value);reset();}}}/>:<input aria-label={lao?'ໄລຍະເວລາ':'Period'} type="date" value={day} max={today} onChange={event=>{if(validVisitDate(event.target.value)&&event.target.value<=today){setDay(event.target.value);reset();}}}/>}</label>
+      <div className="coverage-period-mode" role="group" aria-label={lao?'ຮູບແບບລາຍງານ':'Reporting period'}>{(['month','day'] as const).map(value=><button type="button" key={value} disabled={!!toggling} aria-pressed={mode===value} onClick={()=>{setMode(value);reset();}}>{value==='month'?(lao?'ລາຍເດືອນ':'Monthly'):(lao?'ລາຍວັນ':'Daily')}</button>)}</div>
+      <label>{lao?'ໄລຍະເວລາ':'Period'}{mode==='month'?<input disabled={!!toggling} aria-label={lao?'ໄລຍະເວລາ':'Period'} type="month" value={month} max={today.slice(0,7)} onChange={event=>{const value=event.target.value;if(validVisitDate(value+'-01')&&value.slice(0,7)===value&&value<=today.slice(0,7)){setMonth(value);reset();}}}/>:<input disabled={!!toggling} aria-label={lao?'ໄລຍະເວລາ':'Period'} type="date" value={day} max={today} onChange={event=>{if(validVisitDate(event.target.value)&&event.target.value<=today){setDay(event.target.value);reset();}}}/>}</label>
       {admin&&<label>MDE<select aria-label="MDE" value={mde} onChange={event=>{setMde(event.target.value);reset();}}><option value="all">{lao?'MDE ທັງໝົດ':'All MDEs'}</option>{mdes.map(rep=><option key={rep.id} value={rep.id}>{rep.fullName}</option>)}</select></label>}
       <p>{lao?'ນັບສະເພາະຮ້ານທີ່ເປີດໃຊ້ ແລະ ມອບໝາຍ MDE ຢູ່ປັດຈຸບັນ.':'Coverage uses currently active outlets with an MDE assignment.'}</p>
     </div>
@@ -70,6 +87,7 @@ export function CoverageView({stores,mdes,user,language,promotions,promoStores,p
       <div className="coverage-metric-percent"><span>Coverage</span><strong>{loading?'…':error?'—':`${summary.percent}%`}</strong>{!loading&&!error&&<span>{summary.visits} {lao?'ຄັ້ງ':'visits'}</span>}</div>
     </section>
     {notice&&<p ref={noticeElement} tabIndex={-1} className="coverage-notice" role="status">{notice}</p>}
+    {toggleError&&<p role="alert" className="account-message account-message-error">{toggleError}</p>}
     {!online&&<p className="coverage-notice">{lao?'ຕ້ອງເຊື່ອມເນັດເພື່ອບັນທຶກ ຫຼື ໂຫຼດການຢ້ຽມຢາມ.':'Connect to the internet to record or refresh visits.'}</p>}
     {error&&<div role="alert" className="account-message account-message-error"><p>{lao?'ໂຫຼດ Coverage ບໍ່ສຳເລັດ. ກະລຸນາລອງໃໝ່ ຫຼື ຕິດຕໍ່ Admin.':'Could not load coverage. Retry or contact your administrator.'}</p><p>{error}</p><button type="button" className="coverage-secondary" onClick={refresh}>{lao?'ລອງໃໝ່':'Retry'}</button></div>}
 
@@ -80,13 +98,13 @@ export function CoverageView({stores,mdes,user,language,promotions,promoStores,p
       {loading?<p role="status" className="coverage-empty">{lao?'ກຳລັງໂຫຼດ Coverage…':'Loading coverage…'}</p>:!error&&<>
         <p className="coverage-list-count">{selected.length} {lao?'ຮ້ານ · ຄົ້ນຫາມີຜົນສະເພາະລາຍຊື່ ບໍ່ປ່ຽນເປີເຊັນ Coverage':'outlets · Search filters the list, not the coverage denominator'}</p>
         {!selected.length&&<p className="coverage-empty">{lao?'ບໍ່ພົບຮ້ານທີ່ກົງກັບຕົວກອງ':'No outlets match these filters.'}</p>}
-        <div className="coverage-store-list">{visible.map(store=>{
+        {!admin&&<p className="coverage-muted">{lao?'ກົດແຖບຊື່ຮ້ານເພື່ອສະຫຼັບສະຖານະ. ການຍົກເລີກຈະລົບບັນທຶກຂອງຕົນໃນໄລຍະທີ່ເລືອກເທົ່ານັ້ນ.':'Tap the outlet name panel to toggle its status. Undo clears your visits in the selected period only.'}</p>}<div className="coverage-store-list">{visible.map(store=>{
           const record=rowMap.get(`${store.id}:${store.mdeId}`),visited=!!record?.visitCount,orders=campaigns.get(store.id)!;
           return <article key={store.id} className={`coverage-store-card ${visited?'is-visited':'is-pending'}`} data-store-id={store.id}>
-            <div className="coverage-store-heading"><span className="coverage-store-check" aria-hidden="true">{visited?<CheckCircle2 size={23}/>:<span/>}</span><div><span className="coverage-store-code">{store.storeCode}</span><h3>{store.storeName}</h3><p><MapPin size={13}/>{[store.village,store.district,store.province].filter(Boolean).join(' · ')||store.subChannel}</p>{admin&&<p>{mdes.find(rep=>rep.id===store.mdeId)?.fullName||store.mdeName}</p>}</div><span className="coverage-visit-badge">{visited?(lao?'ຢ້ຽມແລ້ວ':'Visited'):(lao?'ຍັງບໍ່ຢ້ຽມ':'Not visited')}</span></div>
+            <CoverageOutletToggle store={store} visited={visited} pending={toggling===store.id} disabled={!online||!!toggling||loading} admin={admin} mdeName={mdes.find(rep=>rep.id===store.mdeId)?.fullName} lao={lao} onToggle={()=>void toggleVisit(store,visited)}/>
             {visited&&<p className="coverage-last-visit">{lao?'ຄັ້ງຫຼ້າສຸດ':'Latest in period'}: {record.lastVisitedOn} · {record.visitCount} {lao?'ຄັ້ງ':'visits'}</p>}
             <div className="coverage-campaign-counts"><span><Tag size={14}/>{lao?'ໂປຣໂມຊັ່ນ':'Promotions'}: {orders.promos.filter(row=>row.orderStatus==='Ordered').length}/{orders.promos.length}</span><span><PackagePlus size={14}/>{lao?'ສິນຄ້າໃໝ່':'New products'}: {orders.products.filter(row=>row.orderStatus==='Ordered').length}/{orders.products.length}</span></div>
-            <div className="coverage-store-actions">{!admin&&<button type="button" className="coverage-primary" disabled={!online} onClick={()=>openRecord(store)}><Plus size={16}/>{lao?'ບັນທຶກຢ້ຽມຢາມ':'Record visit'}</button>}<button type="button" className="coverage-secondary" onClick={()=>setHistory(store)}><History size={15}/>{lao?'ປະຫວັດ':'History'}</button><button type="button" className="coverage-secondary" aria-expanded={expanded===store.id} onClick={()=>setExpanded(expanded===store.id?undefined:store.id)}>{lao?'ໂປ / ສິນຄ້າໃໝ່':'Campaign details'}</button></div>
+            <div className="coverage-store-actions">{!admin&&<button type="button" className="coverage-secondary" disabled={!online||!!toggling} onClick={()=>openRecord(store)}><CalendarCheck size={16}/>{lao?'ວັນທີ / ໝາຍເຫດ':'Visit date / note'}</button>}<button type="button" className="coverage-secondary" disabled={!!toggling} onClick={()=>setHistory(store)}><History size={15}/>{lao?'ປະຫວັດ':'History'}</button><button type="button" className="coverage-secondary" aria-expanded={expanded===store.id} onClick={()=>setExpanded(expanded===store.id?undefined:store.id)}>{lao?'ໂປ / ສິນຄ້າໃໝ່':'Campaign details'}</button></div>
             {expanded===store.id&&<div className="coverage-campaign-details"><p>{lao?'ສະຖານະສັ່ງຊື້ປັດຈຸບັນ':'Current order status'}</p>{!orders.promos.length&&!orders.products.length&&<p>{lao?'ຮ້ານນີ້ຍັງບໍ່ມີໂປຣໂມຊັ່ນ ຫຼື ສິນຄ້າໃໝ່ທີ່ມອບໝາຍ.':'No promotions or new products are assigned to this outlet.'}</p>}{orders.promos.map(row=><button type="button" key={row.id} onClick={()=>onOpenPromotion(row.promotionId)}><Tag size={15}/><span>{promoMap.get(row.promotionId)!.promotionName}</span><b data-ordered={row.orderStatus==='Ordered'}>{lao?statusLabels[row.orderStatus]:row.orderStatus}</b></button>)}{orders.products.map(row=><button type="button" key={row.id} onClick={()=>onOpenProduct(row.productId,store.id)}><PackagePlus size={15}/><span>{productMap.get(row.productId)!.productName}</span><b data-ordered={row.orderStatus==='Ordered'}>{lao?statusLabels[row.orderStatus]:row.orderStatus}</b></button>)}</div>}
           </article>;
         })}</div>
