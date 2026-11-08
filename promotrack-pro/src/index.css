@@ -501,7 +501,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .accounts-row-actions { flex-wrap: wrap; }
 .mobile-dock button > .absolute { background: transparent; border-color: transparent; }
 
-/* Home-screen installation replaces the redundant NPD shortcut. */
+/* Shared install card; the compact form lives in the account dialog. */
 .pwa-install-card { display: flex; align-items: center; gap: 18px; padding: 24px; border: 1px solid #c9e7d8; border-radius: 26px; background: linear-gradient(120deg,#e4f4e9,#f3faf6); }
 .pwa-install-copy { flex: 1; min-width: 0; }
 .pwa-install-eyebrow { color: #36735a; font-size: 10px; font-weight: 750; letter-spacing: .04em; }
@@ -569,3 +569,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 .purchase-store-code { color: var(--purchase-ink); }
+
+.pwa-install-card.pwa-install-card-compact { display: grid; grid-template-columns: 36px minmax(0,1fr); align-items: start; gap: 12px; padding: 16px; border-radius: 18px; }
+.pwa-install-card-compact .pwa-install-copy h3 { font-size: 14px; margin: 2px 0; }
+.pwa-install-card-compact .pwa-install-copy p { font-size: 11px; }
+.pwa-install-card-compact .pwa-install-button { grid-column: 1/-1; width: 100%; min-height: 44px; padding: 10px 14px; }
+.pwa-install-inline-guide { padding: 16px; border: 1px solid var(--color-border); border-radius: 18px; background: var(--color-bg); }
+.pwa-install-inline-guide h4 { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 750; margin-bottom: 12px; }
+.pwa-install-inline-guide .pwa-install-steps { font-size: 12px; }
+.pwa-install-inline-guide .account-modal-actions { margin-top: 14px; }

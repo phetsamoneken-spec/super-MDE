@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="50%" stop-color="#0d9488" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#ef4444" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle with safe margin -->
+  <rect width="512" height="512" rx="112" fill="url(#brandGrad)" />
+
+  <!-- Inner subtle border -->
+  <rect x="12" y="12" width="488" height="488" rx="100" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.25" />
+
+  <!-- Main Store Front & Promotion Tag Graphic (Inside safe 80% zone) -->
+  <g filter="url(#shadow)" transform="translate(64, 60)">
+    <!-- Store Awning Roof -->
+    <path d="M40 120 L344 120 L310 50 L74 50 Z" fill="#ffffff" />
+    <path d="M40 120 C40 135 60 135 60 120 C60 135 85 135 85 120 C85 135 110 135 110 120 C110 135 135 135 135 120 C135 135 160 135 160 120 C160 135 185 135 185 120 C185 135 210 135 210 120 C210 135 235 135 235 120 C235 135 260 135 260 120 C260 135 285 135 285 120 C285 135 310 135 310 120 C310 135 344 135 344 120" fill="#10b981" />
+
+    <!-- Store Pillars & Wall -->
+    <rect x="64" y="130" width="256" height="180" rx="12" fill="#ffffff" fill-opacity="0.9" />
+
+    <!-- Store Door & Display Window -->
+    <rect x="88" y="160" width="84" height="130" rx="6" fill="#0284c7" fill-opacity="0.15" stroke="#0284c7" stroke-width="4" />
+    <line x1="130" y1="160" x2="130" y2="290" stroke="#0284c7" stroke-width="2" />
+    
+    <rect x="196" y="180" width="100" height="110" rx="6" fill="#0f172a" fill-opacity="0.1" stroke="#059669" stroke-width="4" />
+    <circle cx="216" cy="235" r="4" fill="#059669" />
+
+    <!-- Foreground Floating Promotion Tag Badge with Checkmark -->
+    <g transform="translate(190, 150)">
+      <circle cx="90" cy="90" r="74" fill="url(#accentGrad)" stroke="#ffffff" stroke-width="8" />
+      <!-- Percent % symbol or Checkmark -->
+      <path d="M60 90 L82 112 L124 66" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </g>
+</svg>

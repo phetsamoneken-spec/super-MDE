@@ -1,4 +1,3 @@
-import { PWAInstallCard } from './PWAInstallCard';
 import { CampaignImage } from './CampaignImage';
 import { DashboardCampaignCarousel } from './DashboardCampaignCarousel';
 import { avatarFor } from '../utils/avatar';
@@ -574,8 +573,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           })}
         </div>
       </section>
-
-      <PWAInstallCard language={language}/>
 
       {/* Promotion Stores Detail Modal (Shows all stores that ordered this promotion) */}
       <PromotionStoresDetailModal
