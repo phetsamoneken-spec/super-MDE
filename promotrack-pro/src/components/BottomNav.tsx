@@ -17,17 +17,19 @@ interface BottomNavProps {
   onSelectTab: (tab: NavTab) => void;
   language: Language;
   overdueTasksCount: number;
+  isAdmin: boolean;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   currentTab,
   onSelectTab,
   language,
-  overdueTasksCount
+  overdueTasksCount,
+  isAdmin
 }) => {
   const t = translations[language];
 
-  // Exactly the 5 requested tabs for the 2026 Android PWA layout
+  // Admin sees Settings; Sales has four business navigation tabs.
   const items = [
     { id: 'dashboard' as NavTab, label: language === 'lo' ? 'ໜ້າຫຼັກ' : 'Home', icon: LayoutDashboard },
     { id: 'stores' as NavTab, label: language === 'lo' ? 'ຮ້ານຄ້າ' : 'Stores', icon: Store },
@@ -49,7 +51,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   return (
     <nav aria-label={language === 'lo' ? 'ເມນູຫຼັກ' : 'Main navigation'} className="mobile-dock lg:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-1 pointer-events-none">
       <div className="max-w-md mx-auto pointer-events-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-xl shadow-black/10 dark:shadow-black/50 mb-2 px-1.5 py-1.5 flex items-center justify-between">
-        {items.map((item) => {
+        {items.filter(item=>isAdmin||item.id!=='more').map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
           return (

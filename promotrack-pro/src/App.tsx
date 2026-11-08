@@ -366,7 +366,7 @@ export default function App() {
           )}
 
           {/* Tab 7: User Management System (Admin Only) */}
-          {currentTab === 'users' && (
+          {currentTab === 'users' && currentUser.role === 'admin' && (
             supabaseEnabled ? <RemoteAccountsView currentUser={currentUser} language={language} onRefresh={async () => { await sync.current?.reload(); }} /> :
             <UserManagementView
               currentUser={currentUser}
@@ -379,7 +379,7 @@ export default function App() {
           )}
 
           {/* Tab 8: More Settings Screen (5th Bottom Nav Tab) */}
-          {currentTab === 'more' && (
+          {currentTab === 'more' && currentUser.role === 'admin' && (
             <MoreScreen
               connected={supabaseEnabled}
               currentUser={currentUser}
@@ -407,6 +407,7 @@ export default function App() {
 
       {/* Mobile Bottom Navigation Bar (5 tabs) */}
       <BottomNav
+        isAdmin={currentUser.role === 'admin'}
         currentTab={currentTab}
         onSelectTab={(tab) => {
           if (tab === 'dbReview') {
@@ -426,7 +427,7 @@ export default function App() {
 
       {/* App Branding & Logo Customization Modal */}
       <AppBrandingModal
-        isOpen={isBrandingModalOpen}
+        isOpen={isBrandingModalOpen && currentUser.role === 'admin'}
         onClose={() => setIsBrandingModalOpen(false)}
         language={language}
         onBrandingUpdated={(b) => {
@@ -437,7 +438,7 @@ export default function App() {
 
       {/* Theme Color Customizer Modal */}
       <ThemeColorModal
-        isOpen={isThemeModalOpen}
+        isOpen={isThemeModalOpen && currentUser.role === 'admin'}
         onClose={() => setIsThemeModalOpen(false)}
         language={language}
         isDark={isDark}
@@ -461,7 +462,7 @@ export default function App() {
 
       {/* Supabase Architecture Review Modal */}
       <DatabaseReviewModal
-        isOpen={isDbReviewOpen}
+        isOpen={isDbReviewOpen && currentUser.role === 'admin'}
         onClose={() => setIsDbReviewOpen(false)}
         language={language}
       />

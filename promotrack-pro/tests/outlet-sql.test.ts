@@ -146,3 +146,38 @@ test('only service role can provision Admin-created MDE profiles; pending assign
   await assert.rejects(db.query("SELECT public.app_provision_mde_account($1,'new-mde@example.test','Changed',$2,NULL)",[id,mde]),/Admin/);
  }finally{await db.close();}
 });
+
+test('Sales outlet writes stay in their MDE and store deletion cascades without granting order deletion', {timeout:30000},async()=>{
+ const db=new PGlite({extensions:{'uuid-ossp':uuid_ossp,pgcrypto}});
+ try{
+  await db.exec(scaffold);await db.exec(fs.readFileSync(root+'/supabase/outlet-fresh-setup.sql','utf8'));
+  const admin=crypto.randomUUID(),a=crypto.randomUUID(),b=crypto.randomUUID(),unassigned=crypto.randomUUID();
+  const m1=data.mdes[0].id,m2=data.mdes[1].id;
+  for(const [id,mde,role] of [[admin,null,'admin'],[a,m1,'sales'],[b,m2,'sales'],[unassigned,null,'sales']]){
+   await db.query('INSERT INTO auth.users(id,email,email_confirmed_at) VALUES($1,$2,now())',[id,`${id}@example.test`]);
+   await db.query('INSERT INTO public.profiles(id,email,full_name,role,mde_id) VALUES($1,$2,$3,$4,$5)',[id,`${id}@example.test`,'Fixture',role,mde]);
+  }
+  async function as(id:string){await db.exec('RESET ROLE');await db.query("SELECT set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('SET ROLE authenticated');}
+  const store=crypto.randomUUID(),foreign=crypto.randomUUID();
+  const row=(id:string,mde:string)=>({id,store_code:id,store_name:'Test own outlet',channel:'On Trade',sub_channel:'Local Restaurant',mde_id:mde,assigned_sales_user:null});
+  async function upsert(rows:any[]){return db.query('SELECT public.app_apply_changes($1::jsonb)',[JSON.stringify([{table:'stores',operation:'upsert',rows,expected:{}}])]);}
+  await as(a);await upsert([row(store,m1)]);
+  await assert.rejects(upsert([row(crypto.randomUUID(),m2)]),/row-level security/);
+  await assert.rejects(upsert([{...row(crypto.randomUUID(),m2),assigned_sales_user:a}]),/row-level security/);
+  await assert.rejects(upsert([{...row(store,m2)}]));
+  await as(b);await upsert([row(foreign,m2)]);
+  await as(a);
+  await assert.rejects(db.query('SELECT public.app_apply_changes($1::jsonb)',[JSON.stringify([{table:'stores',operation:'delete',ids:[foreign],expected:{}}])]),/could not be saved/);
+  await as(unassigned);await assert.rejects(upsert([row(crypto.randomUUID(),m1)]),/row-level security/);
+  await as(admin);
+  const product=crypto.randomUUID(),order=crypto.randomUUID();
+  await db.query("INSERT INTO public.new_products(id,product_name,sku,category,launch_date,pack_size,unit_price,target_distribution_rate,target_units_per_store,created_by,status) VALUES($1,'Test','TEST','Test',current_date,'12',1,1,1,$2,'Active')",[product,admin]);
+  await db.query("INSERT INTO public.new_product_store_orders(id,product_id,store_id,order_status) VALUES($1,$2,$3,'Ordered')",[order,product,store]);
+  await as(a);
+  assert.equal((await db.query('DELETE FROM public.new_product_store_orders WHERE id=$1 RETURNING id',[order])).rows.length,0);
+  await db.query('SELECT public.app_apply_changes($1::jsonb)',[JSON.stringify([{table:'stores',operation:'delete',ids:[store],expected:{}}])]);
+  await db.exec('RESET ROLE');
+  assert.equal((await db.query('SELECT id FROM public.new_product_store_orders WHERE id=$1',[order])).rows.length,0);
+  assert.equal((await db.query('SELECT id FROM public.stores WHERE id=$1',[foreign])).rows.length,1);
+ }finally{await db.close();}
+});

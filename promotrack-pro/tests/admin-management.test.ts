@@ -102,3 +102,19 @@ test('NPD follow-up keeps the exact product and outlet across persisted task rea
   assert.equal(dataService.getNewProductStoreOrders(a.id)[0].orderStatus,'Ordered');
   assert.equal(dataService.getTasks().find(t=>t.id===task.id)!.productId,a.id);
 });
+
+test('Sales adds and deletes own outlets but cannot write another MDE or edit store details', () => {
+  const rep=dataService.getSalesReps()[0];
+  const other=dataService.getAllStoresUnfiltered().find(s=>s.assignedSalesUser!==rep.id)!;
+  dataService.setCurrentUser(rep);
+  const own=dataService.getStores()[0];
+  assert.equal(dataService.addStore({...own,storeCode:'SALES-OWN-TEST',assignedSalesUser:other.assignedSalesUser}).success,false);
+  assert.equal(dataService.deleteStore(other.id).success,false);
+  assert.equal(dataService.updateStore(other.id,{assignedSalesUser:rep.id}).success,false);
+  assert(dataService.getAllStoresUnfiltered().some(s=>s.id===other.id));
+  const added=dataService.addStore({...own,storeCode:'SALES-OWN-TEST',storeName:'Own new outlet'});
+  assert.equal(added.success,true);
+  assert(dataService.getStores().some(s=>s.id===added.store!.id));
+  assert.equal(dataService.deleteStore(added.store!.id).success,true);
+  assert(!dataService.getAllStoresUnfiltered().some(s=>s.id===added.store!.id));
+});

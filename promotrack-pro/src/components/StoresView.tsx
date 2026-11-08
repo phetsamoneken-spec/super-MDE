@@ -99,7 +99,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
     storeName: '',
     channel: channels[0]?.name || '',
     subChannel: subChannels.find((item) => item.channelId === channels[0]?.id)?.name || '',
-    assignedSalesUser: salesReps[0]?.id || currentUser.id,
+    assignedSalesUser: currentUser.role==='sales'?(currentUser.mdeId||currentUser.id):(salesReps[0]?.id||currentUser.id),
     phone: '',
     address: '',
     city: '',
@@ -167,7 +167,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
       storeName: '',
       channel: channels[0]?.name || '',
       subChannel: subChannels.find((item) => item.channelId === channels[0]?.id)?.name || '',
-      assignedSalesUser: salesReps[0]?.id || currentUser.id,
+      assignedSalesUser: currentUser.role==='sales'?(currentUser.mdeId||currentUser.id):(salesReps[0]?.id||currentUser.id),
       phone: '',
       address: '',
       city: '',
@@ -637,14 +637,14 @@ export const StoresView: React.FC<StoresViewProps> = ({
                           </a>
                         )}
 
-                        <motion.button
+                        {currentUser.role === 'admin' && (<motion.button
                           whileTap={{ scale: 0.88 }}
                           onClick={() => openEditModal(store)}
                           className="p-1.5 rounded-xl bg-[var(--color-surface-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition"
                           title="Edit Store"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
-                        </motion.button>
+                        </motion.button>)}
 
                         <motion.button
                           whileTap={{ scale: 0.88 }}
@@ -759,16 +759,15 @@ export const StoresView: React.FC<StoresViewProps> = ({
                             >
                               Details
                             </motion.button>
-                            {currentUser.role === 'admin' && (
-                              <>
-                                <motion.button
+                            <>
+                                {currentUser.role === 'admin' && (<motion.button
                                   whileTap={{ scale: 0.85 }}
                                   onClick={() => openEditModal(store)}
                                   className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-secondary)] transition"
                                   title="Edit Store"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
-                                </motion.button>
+                                </motion.button>)}
                                 <motion.button
                                   whileTap={{ scale: 0.85 }}
                                   onClick={() => {
@@ -781,7 +780,6 @@ export const StoresView: React.FC<StoresViewProps> = ({
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </motion.button>
                               </>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -1065,7 +1063,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                   <span>{t.deleteStore}</span>
                 </motion.button>
 
-                <motion.button
+                {currentUser.role === 'admin' && (<motion.button
                   whileTap={{ scale: 0.92 }}
                   onClick={() => {
                     openEditModal(detailStore);
@@ -1075,7 +1073,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                 >
                   <Edit2 className="w-3.5 h-3.5 text-slate-500" />
                   <span>{t.editStore}</span>
-                </motion.button>
+                </motion.button>)}
               </div>
             </motion.div>
           </div>
@@ -1185,6 +1183,8 @@ export const StoresView: React.FC<StoresViewProps> = ({
                       MDE
                     </label>
                     <select
+                      aria-label="MDE"
+                      disabled={currentUser.role==='sales'}
                       value={formData.assignedSalesUser}
                       onChange={(e) => setFormData({ ...formData, assignedSalesUser: e.target.value })}
                       className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"

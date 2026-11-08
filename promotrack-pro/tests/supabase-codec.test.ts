@@ -31,3 +31,14 @@ test('connected changes ignore server timestamps and delete children before pare
   const row=buildChanges(before,same,{},[])[0].rows![0];
   assert.equal(row.product_name,'B'); assert.equal('created_at' in row,false);
 });
+
+test('outlet deletion relies on database cascades instead of privileged child deletes',()=>{
+ const before=empty(),after=empty();
+ before.stores=[{id:'store'} as any];
+ before.promoStores=[{id:'promo-order',storeId:'store'} as any];
+ before.newProductStoreOrders=[{id:'npd-order',storeId:'store'} as any];
+ before.tasks=[{id:'task',storeId:'store'} as any];
+ before.auditLogs=[{id:'history',storeId:'store',promotionStoreId:'promo-order'} as any];
+ const changes=buildChanges(before,after,{stores:{store:'v1'}},[]);
+ assert.deepEqual(changes,[{table:'stores',operation:'delete',ids:['store'],expected:{store:'v1'}}]);
+});

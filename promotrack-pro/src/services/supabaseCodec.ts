@@ -43,12 +43,16 @@ export function decodeRow(entity: Entity, row: Row): Row {
 
 export function buildChanges(before: AppData, after: AppData, versions: Versions, mdes: UserProfile[]): Change[] {
   const ids = new Set(mdes.map((mde) => mde.id));
+  const remainingStores = new Set(after.stores.map(store => store.id));
+  const deletedStores = new Set(before.stores.filter(store => !remainingStores.has(store.id)).map(store => store.id));
   const deletions: Change[] = [];
   const upserts: Change[] = [];
   for (const entity of entities) {
     const old = new Map<string, Row>((before[entity.key] as Row[]).map((record) => [record.id, encodeRow(entity, record, ids)]));
     const next = new Map<string, Row>((after[entity.key] as Row[]).map((record) => [record.id, encodeRow(entity, record, ids)]));
-    const removed = [...old.keys()].filter((id) => !next.has(id));
+    // Store children are deleted by the database's FK cascades. Sending separate
+    // child deletes would require permissions Sales deliberately do not have.
+    const removed = [...old.keys()].filter((id) => !next.has(id) && !deletedStores.has(old.get(id)?.store_id));
     const changed = [...next.values()].filter((record) => JSON.stringify(record) !== JSON.stringify(old.get(record.id)));
     const expected = (keys: string[]) => Object.fromEntries(keys.filter((id) => versions[entity.table]?.[id]).map((id) => [id, versions[entity.table][id]]));
     if (removed.length) deletions.unshift({ table: entity.table, operation: 'delete', ids: removed, expected: expected(removed) });

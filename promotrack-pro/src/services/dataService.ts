@@ -462,6 +462,10 @@ class DataService {
   }
 
   public addStore(storeData: Omit<Store, 'id' | 'createdAt' | 'updatedAt'>): { success: boolean; error?: string; store?: Store } {
+    const actor = this.getCurrentUser();
+    if (actor.role === 'sales' && ((!actor.mdeId && this.remoteContext) || storeData.assignedSalesUser !== (actor.mdeId || actor.id))) {
+      return {success:false,error:'You can only add outlets to your own MDE group.'};
+    }
     const allStores = this.getAllStoresUnfiltered();
     const cleanCode = storeData.storeCode.trim().toUpperCase();
 
@@ -487,6 +491,7 @@ class DataService {
   }
 
   public updateStore(storeId: string, updates: Partial<Store>): { success: boolean; error?: string } {
+    if(this.getCurrentUser().role !== 'admin') return {success:false,error:'Only Admin can edit outlet details.'};
     const allStores = this.getAllStoresUnfiltered();
     const index = allStores.findIndex((s) => s.id === storeId);
     if (index === -1) {
@@ -522,6 +527,10 @@ class DataService {
       return { success: false, error: 'Store not found.' };
     }
 
+    const actor = this.getCurrentUser();
+    if (actor.role === 'sales' && ((!actor.mdeId && this.remoteContext) || !this.isOwnAssignment(storeToDelete.assignedSalesUser))) {
+      return {success:false,error:'You can only delete outlets in your own MDE group.'};
+    }
     // Filter store out
     const filtered = allStores.filter((s) => s.id !== storeId);
     this.writeStored(STORAGE_KEYS.STORES, JSON.stringify(filtered));

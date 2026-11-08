@@ -73,11 +73,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             <motion.div
               whileTap={{ scale: 0.95 }}
               onClick={() => {
+                if(currentUser.role !== 'admin') return;
                 triggerHaptic('light');
                 onOpenBrandingModal();
               }}
               className="flex items-center gap-2 cursor-pointer group"
-              title={language === 'lo' ? 'ກົດເພື່ອປ່ຽນຊື່ແອັບ ແລະ ໂລໂກ້' : 'Click to customize app name & logo'}
+              title={currentUser.role==='admin'?(language === 'lo' ? 'ກົດເພື່ອປ່ຽນຊື່ແອັບ ແລະ ໂລໂກ້' : 'Click to customize app name & logo'):appBranding.appName}
             >
               <BrandLogo branding={appBranding} size="md" className="group-hover:scale-105 transition-transform" />
               <div>
@@ -134,10 +135,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               </motion.button>
             )}
 
+            {currentUser.role === 'admin' && <>
             {/* App Branding & Logo Customization Shortcut */}
             <motion.button
               whileTap={{ scale: 0.85 }}
               onClick={() => {
+                if(currentUser.role !== 'admin') return;
                 triggerHaptic('light');
                 onOpenBrandingModal();
               }}
@@ -159,6 +162,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Database className="w-4 h-4" />
             </motion.button>
+
+            </>}
 
             {/* Language Switcher */}
             <motion.button
