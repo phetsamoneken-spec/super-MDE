@@ -1,5 +1,6 @@
+import { purchaseTone } from '../utils/purchaseTone';
 import React from 'react';
-import { ArrowUpRight, PackagePlus } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, Clock, PackagePlus } from 'lucide-react';
 import type { FollowUpTask, Language, NewProductLaunch, NewProductStoreOrder } from '../types';
 import { CampaignImage } from './CampaignImage';
 
@@ -22,13 +23,13 @@ export function TaskProductOrders({task, products, orders, language, onOpen}: {
     {!relevant.length && linked && <p className="text-xs text-[var(--color-text-secondary)]">{linked.productName} · {lao?'ຍັງບໍ່ມີລາຍການສັ່ງຊື້ຂອງຮ້ານນີ້':'No order record for this outlet'}</p>}
     {relevant.map(order=>{
       const product=products.get(order.productId)!;
-      return <div key={order.id} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-secondary)] p-3 flex gap-3 min-w-0">
+      return <div key={order.id} data-order-id={order.id} data-order-status={order.orderStatus} className={`purchase-outlet-card ${purchaseTone(order.orderStatus)} rounded-2xl p-3 flex gap-3 min-w-0`}>
         <CampaignImage src={product.imageUrl} alt={product.productName} language={language} contain className="w-14 h-16 rounded-xl shrink-0"/>
-        <div className="min-w-0 flex-1 space-y-1"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-bold break-words">{product.productName}</span><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${order.orderStatus==='Ordered'?'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200':'bg-[var(--color-surface)] text-[var(--color-text-secondary)]'}`}>{labels[order.orderStatus]}</span></div>
+        <div className="min-w-0 flex-1 space-y-1"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-bold break-words">{product.productName}</span><span className={`purchase-status-badge ${purchaseTone(order.orderStatus)}`} data-order-status={order.orderStatus}>{order.orderStatus==='Ordered'?<CheckCircle2 size={14}/>:<Clock size={14}/>} {labels[order.orderStatus]}</span></div>
           {order.orderStatus==='Ordered' && <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[var(--color-text-secondary)]"><span>{lao?'ຈຳນວນ':'Qty'}: {order.orderQuantity!=null?number(order.orderQuantity):'—'}</span><span>{lao?'ມູນຄ່າ':'Amount'}: {order.orderAmount!=null?`${number(order.orderAmount)} LAK`:'—'}</span>{order.orderDate&&<span>{order.orderDate.substring(0,10)}</span>}</div>}
           {order.orderStatus==='Sample Provided' && <p className="text-[11px] text-[var(--color-text-secondary)]">{lao?'ຈຳນວນຕົວຢ່າງ':'Sample qty'}: {order.sampleQty??'—'} {order.sampleGivenDate?.substring(0,10)}</p>}
           {order.nextFollowUpDate && order.orderStatus!=='Ordered' && <p className="text-[11px] text-[var(--color-text-secondary)]">{lao?'ຕິດຕາມຄັ້ງຕໍ່ໄປ':'Next follow-up'}: {order.nextFollowUpDate.substring(0,10)}</p>}
-          <button type="button" onClick={()=>onOpen(product.id,task.storeId)} className="text-[11px] text-[var(--color-primary)] font-bold inline-flex items-center gap-1 py-1">{lao?'ເບິ່ງ / ອັບເດດການສັ່ງຊື້':'View / update order'}<ArrowUpRight size={13}/></button>
+          <button type="button" onClick={()=>onOpen(product.id,task.storeId)} className={`order-confirm-button order-task-action ${purchaseTone(order.orderStatus)}`}>{order.orderStatus==='Ordered'?(lao?'ເບິ່ງ / ແກ້ໄຂການສັ່ງຊື້':'View / edit order'):(lao?'ຢືນຢັນ / ອັບເດດການສັ່ງຊື້':'Confirm / update order')}<ArrowUpRight size={13}/></button>
         </div>
       </div>;
     })}

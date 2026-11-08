@@ -1,3 +1,4 @@
+import { purchaseTone } from '../utils/purchaseTone';
 import { CampaignImage } from './CampaignImage';
 import React, { useState, useMemo, useRef } from 'react';
 import {
@@ -112,6 +113,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
     new Date(Date.now() + 3 * 86400000).toISOString().substring(0, 10)
   );
   const [autoCreateTask, setAutoCreateTask] = useState<boolean>(true);
+  const [orderError, setOrderError] = useState('');
 
   // Create/Edit Product Form
   const [formData, setFormData] = useState({
@@ -404,6 +406,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
     const store = storeMap.get(order.storeId) || null;
     const product = productMap.get(order.productId) || null;
 
+    setOrderError('');
     setUpdatingOrder(order);
     setUpdatingStore(store);
     setUpdatingProductItem(product);
@@ -455,7 +458,8 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
       createAutoTask: autoCreateTask
     });
 
-    if (res.success && orderFormStatus === 'Ordered') {
+    if (!res.success) { setOrderError(res.error || (language==='lo'?'ບັນທຶກບໍ່ສຳເລັດ. ກະລຸນາລອງໃໝ່.':'Could not save this order. Please retry.')); return; }
+    if (orderFormStatus === 'Ordered') {
       try {
         confetti({
           particleCount: 50,
@@ -985,13 +989,14 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                     key={order.id}
                     layout
                     whileTap={{ scale: 0.99 }}
-                    className="calm-card p-3.5 sm:p-4 rounded-3xl border border-[var(--color-border)] hover:border-[var(--color-primary)]/40 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                    data-order-id={order.id} data-order-status={order.orderStatus}
+                    className={`purchase-outlet-card ${purchaseTone(order.orderStatus)} calm-card p-3.5 sm:p-4 rounded-3xl transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs`}
                   >
                     <div className="space-y-1.5 flex-1 min-w-0">
                       
                       {/* Store code, name, and Sub-Channel chip */}
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-extrabold text-[var(--color-primary)]">
+                        <span className="purchase-store-code font-mono text-xs font-extrabold">
                           {store.storeCode}
                         </span>
                         <h4 className="text-xs sm:text-sm font-bold text-[var(--color-text-primary)] truncate">
@@ -1060,19 +1065,13 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                     </div>
 
                     {/* Right side: Status Badge & Update CTA */}
-                    <div className="flex items-center sm:flex-col items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--color-border)]">
+                    <div className="order-card-actions flex flex-wrap items-center sm:flex-col items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--color-border)]">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                          order.orderStatus === 'Ordered'
-                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
-                            : order.orderStatus === 'Sample Provided'
-                            ? 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30'
-                            : order.orderStatus === 'Follow-up Required'
-                            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'
-                            : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                        }`}
+                        className={`purchase-status-badge ${purchaseTone(order.orderStatus)}`}
+                        data-order-status={order.orderStatus}
                       >
                         {order.orderStatus === 'Ordered' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                        {order.orderStatus === 'Not Ordered' && <Clock className="w-3.5 h-3.5" />}
                         {order.orderStatus === 'Sample Provided' && <Gift className="w-3.5 h-3.5" />}
                         {order.orderStatus === 'Follow-up Required' && <Clock className="w-3.5 h-3.5" />}
                         <span>
@@ -1082,16 +1081,16 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                             ? language === 'lo' ? 'ລົງຕົວຢ່າງແລ້ວ' : 'Sample Given'
                             : order.orderStatus === 'Follow-up Required'
                             ? language === 'lo' ? 'ຕ້ອງຕິດຕາມ' : 'Follow-up'
-                            : language === 'lo' ? 'ຍັງບໍ່ສັ່ງ' : 'Not Ordered'}
+                            : order.orderStatus==='Declined'?(language==='lo'?'ປະຕິເສດ':'Declined'):language === 'lo' ? 'ຍັງບໍ່ສັ່ງ' : 'Not Ordered'}
                         </span>
                       </span>
 
                       <motion.button
                         whileTap={{ scale: 0.92 }}
                         onClick={() => openUpdateOrderModal(order)}
-                        className="px-3.5 py-1.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-xs font-bold shadow-2xs transition"
+                        className={`order-confirm-button ${purchaseTone(order.orderStatus)}`}
                       >
-                        {language === 'lo' ? 'ອັບເດດການສັ່ງຊື້' : 'Update Status'}
+                        <CheckCircle2 size={18} aria-hidden="true"/>{order.orderStatus==='Ordered'?(language==='lo'?'ແກ້ໄຂການສັ່ງຊື້':'Edit order'):(language==='lo'?'ຢືນຢັນ / ອັບເດດການສັ່ງຊື້':'Confirm / update order')}
                       </motion.button>
                     </div>
 
@@ -1348,7 +1347,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                               ? 'bg-purple-600 text-white border-purple-600 shadow-2xs'
                               : st === 'Follow-up Required'
                               ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
-                              : 'bg-slate-700 text-white border-slate-700 shadow-2xs'
+                              : 'bg-orange-700 text-white border-orange-700 shadow-2xs'
                             : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-secondary)]'
                         }`}
                       >
@@ -1511,6 +1510,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                   />
                 </div>
 
+                {orderError&&<p role="alert" className="account-message account-message-error">{orderError}</p>}
                 <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--color-border)]">
                   <motion.button
                     type="button"
@@ -1524,9 +1524,9 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                   <motion.button
                     type="submit"
                     whileTap={{ scale: 0.94 }}
-                    className="px-5 py-2.5 rounded-2xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-xs font-bold shadow-xs transition"
+                    className={`order-confirm-button order-submit-button ${purchaseTone(orderFormStatus)}`}
                   >
-                    {language === 'lo' ? 'ບັນທຶກສະຖານະ' : 'Save Status'}
+                    <CheckCircle2 size={19} aria-hidden="true"/>{orderFormStatus==='Ordered'?(language==='lo'?'ຢືນຢັນການສັ່ງຊື້':'Confirm purchase'):(language === 'lo' ? 'ບັນທຶກສະຖານະ' : 'Save status')}
                   </motion.button>
                 </div>
 

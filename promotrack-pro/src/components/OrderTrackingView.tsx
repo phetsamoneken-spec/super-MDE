@@ -1,3 +1,4 @@
+import { purchaseTone } from '../utils/purchaseTone';
 import React, { useState, useMemo } from 'react';
 import {
   TrendingUp,
@@ -336,7 +337,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
                           ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/40 animate-pulse'
                           : record.orderStatus === 'Cancelled'
                           ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                          : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                          : 'bg-orange-100 text-orange-900 dark:bg-orange-950 dark:text-orange-200 border border-orange-400'
                       }`}>
                         {record.orderStatus === 'Ordered' && <CheckCircle2 className="w-3 h-3" />}
                         {record.orderStatus === 'Follow-up Required' && <AlertCircle className="w-3 h-3" />}
@@ -465,7 +466,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
                               ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/40 animate-pulse'
                               : record.orderStatus === 'Cancelled'
                               ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                              : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                              : 'bg-orange-100 text-orange-900 dark:bg-orange-950 dark:text-orange-200 border border-orange-400'
                           }`}>
                             {record.orderStatus === 'Ordered' && <CheckCircle2 className="w-3.5 h-3.5" />}
                             {record.orderStatus === 'Follow-up Required' && <AlertCircle className="w-3.5 h-3.5" />}
@@ -705,9 +706,9 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
                   <motion.button
                     type="submit"
                     whileTap={{ scale: 0.94 }}
-                    className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition"
+                    className={`order-confirm-button order-submit-button ${purchaseTone(newStatus)}`}
                   >
-                    {language === 'lo' ? 'ຢືນຢັນອັບເດດ' : 'Confirm Update'}
+                    <CheckCircle2 size={18}/>{newStatus==='Ordered'?(language==='lo'?'ຢືນຢັນການສັ່ງຊື້':'Confirm purchase'):(language === 'lo' ? 'ຢືນຢັນອັບເດດ' : 'Confirm update')}
                   </motion.button>
                 </div>
 

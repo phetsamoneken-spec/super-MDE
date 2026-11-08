@@ -166,7 +166,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <img
             src={avatarFor(currentUser)}
             alt={currentUser.fullName}
-            className="w-11 h-11 rounded-2xl object-cover ring-2 ring-[var(--color-primary)]"
+            className="w-11 h-11 rounded-2xl profile-photo object-contain ring-2 ring-[var(--color-primary)]"
           />
           <div>
             <p className="dashboard-kicker">{language==='lo'?'ຍິນດີຕ້ອນຮັບກັບຄືນ':'WELCOME BACK'}</p>

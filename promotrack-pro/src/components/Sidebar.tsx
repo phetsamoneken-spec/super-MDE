@@ -189,11 +189,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="shrink-0 mt-3 pt-3 border-t border-[var(--color-border)]">
           <div className="p-3 rounded-2xl bg-[var(--color-surface-secondary)] border border-[var(--color-border)]">
             <div className="flex items-center gap-2.5">
+              <button type="button" aria-label={language==='lo'?'ເບິ່ງຮູບບັນຊີ':'View account photo'} onClick={()=>{onCloseMobile();onOpenSwitchUser();}}>
               <img
                 src={avatarFor(currentUser)}
                 alt={currentUser.fullName}
-                className="w-9 h-9 rounded-xl object-cover ring-2 ring-[var(--color-primary)]"
+                className="w-12 h-14 rounded-xl profile-photo object-contain ring-2 ring-[var(--color-primary)]"
               />
+              </button>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-[var(--color-text-primary)] truncate">
                   {currentUser.fullName}

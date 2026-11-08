@@ -372,7 +372,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   <img
                     src={avatarFor(user)}
                     alt={user.fullName}
-                    className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[var(--color-border)] shrink-0 bg-white"
+                    className="w-12 h-12 rounded-2xl profile-photo object-contain ring-2 ring-[var(--color-border)] shrink-0 bg-white"
                   />
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -507,7 +507,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                     <img
                       src={avatarFor(formData)}
                       alt="Avatar Preview"
-                      className="w-14 h-14 rounded-2xl object-cover ring-2 ring-[var(--color-primary)] bg-white shrink-0"
+                      className="w-14 h-14 rounded-2xl profile-photo object-contain ring-2 ring-[var(--color-primary)] bg-white shrink-0"
                     />
 
                     <div className="space-y-1">
@@ -555,7 +555,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                               : 'border-transparent opacity-75 hover:opacity-100'
                           }`}
                         >
-                          <img src={url} alt={`Preset ${idx}`} className="w-full h-full object-cover" />
+                          <img src={url} alt={`Preset ${idx}`} className="w-full h-full profile-photo object-contain" />
                           {isSelected && (
                             <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                               <Check className="w-3.5 h-3.5 text-white stroke-[3]" />

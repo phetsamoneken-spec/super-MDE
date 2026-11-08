@@ -1,3 +1,4 @@
+import { purchaseTone } from '../utils/purchaseTone';
 import { avatarFor } from '../utils/avatar';
 import React, { useState, useMemo } from 'react';
 import {
@@ -379,8 +380,8 @@ export const StoresView: React.FC<StoresViewProps> = ({
         );
       case 'Not Ordered':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-100 text-orange-900 dark:bg-orange-950 dark:text-orange-200 border border-orange-400 dark:border-orange-700">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-600" />
             {t.statusNotOrdered}
           </span>
         );
@@ -620,7 +621,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                         <img
                           src={avatarFor(rep)}
                           alt={rep?.fullName}
-                          className="w-4 h-4 rounded-full object-cover"
+                          className="w-4 h-4 rounded-full profile-photo object-contain"
                         />
                         <span className="truncate max-w-[130px]">{rep?.fullName || 'Unassigned'}</span>
                       </div>
@@ -725,7 +726,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                               <img
                                 src={avatarFor(rep)}
                                 alt={rep.fullName}
-                                className="w-5 h-5 rounded-full object-cover"
+                                className="w-5 h-5 rounded-full profile-photo object-contain"
                               />
                               <span className="text-[var(--color-text-primary)] font-medium">
                                 {rep.fullName}
@@ -1029,10 +1030,10 @@ export const StoresView: React.FC<StoresViewProps> = ({
                       whileTap={{ scale: 0.94 }}
                       type="submit"
                       disabled={isUpdatingOrder}
-                      className="flex-1 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5"
+                      className={`order-confirm-button flex-1 ${purchaseTone(orderStatusVal)}`}
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>{language === 'lo' ? 'ບັນທຶກສະຖານະການສັ່ງຊື້' : 'Save Order Status'}</span>
+                      <span>{orderStatusVal==='Ordered'?(language==='lo'?'ຢືນຢັນການສັ່ງຊື້':'Confirm purchase'):(language === 'lo' ? 'ບັນທຶກສະຖານະການສັ່ງຊື້' : 'Save Order Status')}</span>
                     </motion.button>
 
                     <motion.button

@@ -205,7 +205,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <img
                 src={avatarFor(currentUser)}
                 alt={currentUser.fullName}
-                className="w-7 h-7 rounded-full object-cover ring-2 ring-emerald-500/50"
+                className="w-7 h-7 rounded-full profile-photo object-contain ring-2 ring-emerald-500/50"
               />
               <div className="hidden sm:block">
                 <div className="text-xs font-bold text-slate-900 dark:text-white leading-tight">

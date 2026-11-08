@@ -84,7 +84,7 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
                   <img
                     src={avatarFor(user)}
                     alt={user.fullName}
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500/20"
+                    className="w-10 h-10 rounded-full profile-photo object-contain ring-2 ring-emerald-500/20"
                   />
                   <div>
                     <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
