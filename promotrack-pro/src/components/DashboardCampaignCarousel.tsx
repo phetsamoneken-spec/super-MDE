@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUpRight, ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react';
+import { ArrowUpRight, ImageIcon } from 'lucide-react';
 import { useReducedMotion } from 'motion/react';
 import type { Language, NewProductLaunch, Promotion } from '../types';
 import { CampaignImage } from './CampaignImage';
@@ -66,12 +66,7 @@ export function DashboardCampaignCarousel({products, promotions, language, onOpe
         <span className="min-w-0"><span className="hero-campaign-kind">{current.kind==='product'?(lao?'ສິນຄ້າໃໝ່':'NEW PRODUCT'):(lao?'ໂປຣໂມຊັ່ນ':'PROMOTION')}</span><span className="hero-campaign-title">{current.title}</span></span>
         <ArrowUpRight size={19} aria-hidden="true"/>
       </button>
-      <div className="hero-campaign-controls">
-        {count>1 && <button type="button" className="hero-carousel-arrow" onClick={()=>goTo(selected-1)} aria-label={lao?'ຮູບກ່ອນໜ້າ':'Previous image'}><ChevronLeft size={19}/></button>}
-        <span className="hero-campaign-count" role="status" aria-live="polite">{selected+1} / {count}<span>{count>1?(lao?'ປັດເພື່ອເບິ່ງຮູບຕໍ່ໄປ':'Swipe to explore'):(lao?'ຮູບທີ່ບັນທຶກໃນແອັບ':'Saved in your app')}</span></span>
-        {count>1 && <button type="button" className="hero-carousel-arrow" onClick={()=>goTo(selected+1)} aria-label={lao?'ຮູບຕໍ່ໄປ':'Next image'}><ChevronRight size={19}/></button>}
-      </div>
-      {count>1 && count<=8 && <div className="hero-campaign-dots" role="group" aria-label={lao?'ເລືອກຮູບ':'Choose an image'}>{slides.map((slide,i)=><button type="button" key={slide.key} onClick={()=>goTo(i)} aria-label={`${lao?'ເບິ່ງຮູບ':'Show image'} ${i+1}: ${slide.title}`} aria-pressed={i===selected}><span/></button>)}</div>}
+      <span className="sr-only" role="status" aria-live="polite">{selected+1} / {count}: {current.title}</span>
     </>}
   </section>;
 }

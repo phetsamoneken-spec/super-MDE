@@ -1,3 +1,4 @@
+import { PWAInstallCard } from './PWAInstallCard';
 import { CampaignImage } from './CampaignImage';
 import { DashboardCampaignCarousel } from './DashboardCampaignCarousel';
 import { avatarFor } from '../utils/avatar';
@@ -574,41 +575,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </section>
 
-      {/* 8. New Product Launch Orders Banner (NPD Distribution) */}
-      <motion.div
-        whileTap={{ scale: 0.985 }}
-        onClick={() => {
-          triggerHaptic('light');
-          onNavigateTab('newProducts');
-        }}
-        className="dashboard-npd-banner calm-card p-4 rounded-3xl border border-emerald-500/30 bg-emerald-500/5 hover:border-[var(--color-primary)] cursor-pointer transition flex items-center justify-between gap-3 shadow-2xs"
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary)] text-white flex items-center justify-center shrink-0 shadow-2xs">
-            <PackagePlus className="w-5 h-5" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h4 className="text-xs sm:text-sm font-black text-[var(--color-text-primary)] truncate">
-                {language === 'lo' ? 'ຕິດຕາມການສັ່ງຊື້ສິນຄ້າໃໝ່ (NPD Launches)' : 'New Product Launch Orders'}
-              </h4>
-              <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-emerald-500 text-white shrink-0">
-                Sub-Channel
-              </span>
-            </div>
-            <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5 truncate">
-              {language === 'lo'
-                ? 'ເລືອກຮ້ານຄ້າຕາມ Sub-Channel, ຕິດຕາມການລົງຕົວຢ່າງ ແລະ ການສັ່ງຊື້ສິນຄ້າໃໝ່'
-                : 'Select stores by Sub-Channel, track sampling, and new product orders'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)] shrink-0">
-          <span className="hidden sm:inline">{language === 'lo' ? 'ເບິ່ງລາຍການ' : 'View'}</span>
-          <ChevronRight className="w-4 h-4" />
-        </div>
-      </motion.div>
+      <PWAInstallCard language={language}/>
 
       {/* Promotion Stores Detail Modal (Shows all stores that ordered this promotion) */}
       <PromotionStoresDetailModal

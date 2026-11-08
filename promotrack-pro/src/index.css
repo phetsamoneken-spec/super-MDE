@@ -271,9 +271,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .colorful-dashboard .dashboard-products > div:first-child h3 > svg { box-sizing: content-box; background: #fff0de; color: #a15c20; padding: 9px; border-radius: 12px; }
 .colorful-dashboard .dashboard-products .calm-card { border-radius: 25px; box-shadow: 0 10px 30px -24px #32215840; }
 .colorful-dashboard .dashboard-products button > div:first-child { background: linear-gradient(140deg,#f6f1ff,#edf6ff); }
-.colorful-dashboard .dashboard-npd-banner { background: linear-gradient(110deg,#e9e4ff,#f2efff); border-color: #d9cff4; padding: 20px; }
-.colorful-dashboard .dashboard-npd-banner h4 { color: #443372; }
-.colorful-dashboard .dashboard-npd-banner > div:first-child > div:first-child { background: #7050b4; }
 .dark .colorful-dashboard { background: radial-gradient(ellipse at 90% 0,#33275450,transparent 42%); }
 .dark .colorful-dashboard .dashboard-kicker { color: #baa8dc; }
 .dark .colorful-dashboard .dashboard-bell { background: #382f1b; color: #e5c274; border-color: #5b4a2c; }
@@ -290,8 +287,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dark .colorful-dashboard .dashboard-promotions > div:first-child > div > svg { background: #34254d; color: #dac6ff; }
 .dark .colorful-dashboard .dashboard-products > div:first-child h3 > svg { background: #433022; color: #ffd0aa; }
 .dark .colorful-dashboard .dashboard-products button > div:first-child { background: linear-gradient(140deg,#2e2547,#24334c); }
-.dark .colorful-dashboard .dashboard-npd-banner { background: linear-gradient(110deg,#302643,#28233c); border-color: #4c3e66; }
-.dark .colorful-dashboard .dashboard-npd-banner h4 { color: #e0d2ff; }
 @media (max-width: 639px) {
   .colorful-dashboard .dashboard-hero { min-height: 260px; padding: 22px; }
   .colorful-dashboard .dashboard-hero h2 { font-size: clamp(25px,6.7vw,29px); line-height: 1.4; }
@@ -328,15 +323,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hero-campaign-caption > svg { flex-shrink: 0; }
 .hero-campaign-kind { display: block; font-size: 9px; font-weight: 700; color: #e1f49d; letter-spacing: .06em; line-height: 1.8; }
 .hero-campaign-title { display: block; font-size: 14px; font-weight: 700; line-height: 1.6; overflow-wrap: anywhere; }
-.hero-campaign-controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
-.hero-carousel-arrow { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid #ffffff40; border-radius: 14px; background: #ffffff14; color: white; }
-.hero-carousel-arrow:hover, .hero-campaign-caption:hover { background: #ffffff10; }
-.hero-campaign-count { text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; line-height: 1.5; }
-.hero-campaign-count > span { display: block; font-size: 9px; color: #ded6f6; }
-.hero-campaign-dots { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; margin-top: 3px; }
-.hero-campaign-dots button { display: grid; place-items: center; min-width: 30px; min-height: 30px; border-radius: 8px; }
-.hero-campaign-dots button > span { width: 6px; height: 6px; border-radius: 8px; background: #ffffff50; }
-.hero-campaign-dots button[aria-pressed=true] > span { width: 18px; background: #e1f49d; }
+.hero-campaign-caption:hover { background: #ffffff10; }
 .hero-campaign-empty { min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; font-size: 12px; color: #e7defb; }
 @media (max-width: 767px) {
   .colorful-dashboard .dashboard-hero--campaigns { flex-direction: column; gap: 20px; padding: 22px; }
@@ -512,3 +499,26 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mobile-dock button > div[style] { border-color: transparent; }
 .accounts-row-actions { flex-wrap: wrap; }
 .mobile-dock button > .absolute { background: transparent; border-color: transparent; }
+
+/* Home-screen installation replaces the redundant NPD shortcut. */
+.pwa-install-card { display: flex; align-items: center; gap: 18px; padding: 24px; border: 1px solid #c9e7d8; border-radius: 26px; background: linear-gradient(120deg,#e4f4e9,#f3faf6); }
+.pwa-install-copy { flex: 1; min-width: 0; }
+.pwa-install-eyebrow { color: #36735a; font-size: 10px; font-weight: 750; letter-spacing: .04em; }
+.pwa-install-copy h3 { font-size: 17px; font-weight: 800; line-height: 1.7; color: #184c37; margin: 3px 0; }
+.pwa-install-copy p { font-size: 12px; color: #4e7461; line-height: 1.8; }
+.pwa-install-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 12px 20px; border-radius: 15px; background: #146c4b; color: white; font-size: 13px; font-weight: 750; flex-shrink: 0; transition: background-color .2s; }
+.pwa-install-button:hover:not(:disabled) { background: #0e563b; }
+.pwa-install-button:disabled { opacity: .75; cursor: default; }
+.pwa-install-steps { padding-left: 22px; list-style: decimal; font-size: 13px; line-height: 1.9; }
+.pwa-install-steps li + li { margin-top: 12px; }
+.dark .pwa-install-card { background: linear-gradient(120deg,#19392c,#182c23); border-color: #335a45; }
+.dark .pwa-install-copy h3 { color: #ddf7e7; }
+.dark .pwa-install-eyebrow,.dark .pwa-install-copy p { color: #b6d6c4; }
+.dark .pwa-install-button { background: #9cddba; color: #123d2a; }
+.dark .pwa-install-button:hover:not(:disabled) { background: #b6ebce; }
+@media(max-width:639px) {
+ .pwa-install-card { flex-wrap: wrap; gap: 14px; padding: 20px; }
+ .pwa-install-copy { flex-basis: calc(100% - 80px); }
+ .pwa-install-copy h3 { font-size: 15px; }
+ .pwa-install-button { width: 100%; }
+}
