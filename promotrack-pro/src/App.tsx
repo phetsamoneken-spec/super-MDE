@@ -35,6 +35,7 @@ import { registerServiceWorker } from './pwaRegister';
 import { CoverageView } from './components/CoverageView';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { WifiOff } from 'lucide-react';
+import { AppLoadingScreen, SyncActivity } from './components/AppLoadingScreen';
 
 export default function App() {
   // Authentication State
@@ -170,13 +171,12 @@ export default function App() {
   };
 
   if (supabaseEnabled) {
-    if (!authReady) return <main className="min-h-screen flex items-center justify-center p-6">{language === 'lo' ? 'ກຳລັງໂຫຼດ…' : 'Loading…'}</main>;
+    if (!authReady) return <AppLoadingScreen branding={appBranding} language={language} stage="opening"/>;
     if (!session) return <SupabaseSignIn language={language} />;
-    if (!syncState.user) return <main className="min-h-screen flex items-center justify-center p-6"><section className="calm-card rounded-3xl p-6 space-y-4 max-w-lg">
-      <h1 className="font-bold">{language === 'lo' ? 'ກຳລັງເຊື່ອມຂໍ້ມູນ…' : 'Connecting your account…'}</h1>
-      {syncState.status === 'error' && <><p role="alert">{syncState.message}</p><button onClick={() => { sync.current?.stop(); const connection = new SupabaseSync(supabase, projectRef, session.user.id, (state) => { setSyncState(state); if (state.user) setCurrentUser(state.user); }); sync.current = connection; void connection.start(); }} className="rounded-xl border p-3">{language === 'lo' ? 'ລອງໃໝ່' : 'Retry'}</button></>}
-      <button onClick={signOut} className="block underline">{language === 'lo' ? 'ອອກຈາກລະບົບ' : 'Sign out'}</button>
-    </section></main>;
+    if (!syncState.user) return <AppLoadingScreen branding={appBranding} language={language} stage={syncState.status==='error'?'error':'connecting'}>
+      {syncState.status === 'error' && <><p role="alert" className="startup-error-detail">{syncState.message}</p><button onClick={() => { sync.current?.stop(); const connection = new SupabaseSync(supabase, projectRef, session.user.id, (state) => { setSyncState(state); if (state.user) setCurrentUser(state.user); }); sync.current = connection; void connection.start(); }} className="startup-primary">{language === 'lo' ? 'ລອງໃໝ່' : 'Retry'}</button></>}
+      <button onClick={signOut} className="startup-secondary">{language === 'lo' ? 'ອອກຈາກລະບົບ' : 'Sign out'}</button>
+    </AppLoadingScreen>;
     if (syncState.user.role === 'sales' && !syncState.user.mdeId) return <main className="min-h-screen flex items-center justify-center p-6"><section className="calm-card rounded-3xl p-6 max-w-md space-y-4">
       <h1 className="font-bold">{language === 'lo' ? 'ລໍຖ້າ Admin ມອບໝາຍ MDE' : 'Waiting for an MDE assignment'}</h1>
       <p className="text-sm break-all">{syncState.user.email}</p><p className="text-sm">{language === 'lo' ? 'ໃຫ້ Admin ເລືອກ MDE ໃຫ້ບັນຊີນີ້ໃນໜ້າຈັດການຜູ້ໃຊ້.' : 'Ask Admin to assign your MDE in User Management.'}</p>
@@ -203,8 +203,9 @@ export default function App() {
       {supabaseEnabled && <div role="status" className={`connection-status ${syncState.status === 'offline' ? 'connection-status-offline' : 'connection-status-online'} px-4 py-2 text-xs text-center bg-[var(--color-surface-secondary)]`}>
         {syncState.status === 'offline' ? (language === 'lo' ? 'Offline: ການແກ້ໄຂເກັບໃນເຄື່ອງ ຈົນກວ່າຈະເຊື່ອມຕໍ່.' : 'Offline: edits stay on this device until reconnected.') : (language === 'lo' ? 'ເຊື່ອມຕໍ່ Supabase' : 'Connected to Supabase')}
       </div>}
-      {supabaseEnabled && (syncState.status === 'saving' || syncState.status === 'loading' || syncState.status === 'error') && <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4"><section role={syncState.status === 'error' ? 'alertdialog' : 'status'} aria-modal="true" className="calm-card rounded-3xl max-w-lg p-5 space-y-4">
-        <h2 className="font-bold">{syncState.status === 'loading' ? (language === 'lo' ? 'ກຳລັງໂຫຼດ…' : 'Refreshing…') : syncState.status === 'saving' ? (language === 'lo' ? 'ກຳລັງບັນທຶກ…' : 'Saving…') : (language === 'lo' ? 'ກວດການບັນທຶກຂໍ້ມູນ' : 'Changes need attention')}</h2>
+      {supabaseEnabled && (syncState.status==='saving'||syncState.status==='loading')&&<SyncActivity branding={appBranding} language={language} saving={syncState.status==='saving'}/>}
+      {supabaseEnabled && syncState.status === 'error' && <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4"><section role="alertdialog" aria-modal="true" className="calm-card rounded-3xl max-w-lg p-5 space-y-4">
+        <h2 className="font-bold">{language === 'lo' ? 'ກວດການບັນທຶກຂໍ້ມູນ' : 'Changes need attention'}</h2>
         {syncState.status === 'error' && <><p className="text-sm">{syncState.message}</p><p className="text-xs">{language === 'lo' ? 'ການແກ້ໄຂທີ່ຍັງບໍ່ໄດ້ບັນທຶກ ຍັງເກັບໃນເຄື່ອງ. ການໂຫຼດຈາກຖານຂໍ້ມູນຈະເກັບ draft ສຳຮອງໄວ້.' : 'Unsaved edits are retained on this device. Reloading the database keeps a draft backup.'}</p><div className="flex gap-2 flex-wrap">
           <button className="rounded-xl border p-3" onClick={() => void sync.current?.flush()}>{language === 'lo' ? 'ລອງບັນທຶກໃໝ່' : 'Retry save'}</button><button className="rounded-xl border p-3" onClick={() => void sync.current?.reload()}>{language === 'lo' ? 'ໂຫຼດຈາກຖານຂໍ້ມູນ' : 'Reload database'}</button>
         </div></>}
