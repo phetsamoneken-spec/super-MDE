@@ -1,6 +1,6 @@
 # Super MDE motion preview deployment
 
-This branch publishes an approved online review of feature commit `4575bb3`
+This branch publishes an approved online review of feature commit `c1a6de1`
 at `/super-MDE/preview/premium-motion/`.
 
 The production root is copied byte-for-byte from the successful Pages artifact
@@ -16,3 +16,5 @@ no browser-test fixture campaigns or test credentials.
 Preview-only output uses relative asset URLs and an isolated service-worker
 cache prefix so activating the review app cannot delete production caches.
 The original production service worker and manifest remain byte-identical.
+
+The latest preview moves the PWA install card from Dashboard to Your account for Admin and MDE.
