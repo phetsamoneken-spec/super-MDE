@@ -26,6 +26,12 @@ The approved production rollout uses these steps:
 
 A frontend rollback does not require deleting the new table or its visit history. Review any schema rollback separately to avoid data loss.
 
+### Production verification — 2026-11-08
+
+Both incremental migrations were applied to the designated Supabase project. Existing table counts were unchanged. RLS is enabled with four visit policies; anonymous table/function access is denied, authenticated aggregation is allowed, and clients cannot supply the visit actor. A single rolled-back transaction verified MDE insertion, server-stamped ownership, note updates and MDE/Admin aggregation; no test visits remain.
+
+Coverage was published at [Super MDE](https://phetsamoneken-spec.github.io/super-MDE/) through the existing Pages workflow. CI passed all 29 tests, TypeScript and the production build. The live JavaScript matched the reviewed build, the existing premium-motion preview remained reachable, and the signed-in browser fixture regression passed against the live site. Actual password login was not automated; the unsigned login screen and database role enforcement were verified without changing accounts or passwords.
+
 ## Verification
 
 ```sh
