@@ -1,6 +1,6 @@
 # Outlet visit coverage
 
-Implemented on `feat/outlet-visit-coverage`; live schema and publication await owner approval.
+Implemented on `feat/outlet-visit-coverage`. The owner explicitly approved the additive live schema and Coverage publication on 2026-11-08.
 
 ## Behavior
 
@@ -17,7 +17,7 @@ Implemented on `feat/outlet-visit-coverage`; live schema and publication await o
 
 `supabase/migrations/20261108020000_outlet_visit_coverage.sql` creates only `outlet_visits`, its indexes/trigger/RLS policies, and three helper functions. Existing tables, authentication, roles, sync RPC, manifest and service worker are unchanged. The aggregate RPC returns one JSON value to avoid PostgREST's row limit above 1,000 outlets; invoker rights preserve RLS.
 
-Obtain explicit owner approval for the new schema and production publication, as required by their execution rules. Then:
+The approved production rollout uses these steps:
 
 1. Apply only the incremental migration to the designated project. Do not run fresh setup or seed against the existing project.
 2. Verify RLS, column/function grants and PostgREST schema visibility. The table initially contains no visits.
