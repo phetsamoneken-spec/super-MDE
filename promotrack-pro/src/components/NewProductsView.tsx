@@ -1,3 +1,4 @@
+import { LaoDatePicker } from './LaoDatePicker';
 import { purchaseTone } from '../utils/purchaseTone';
 import { CampaignImage } from './CampaignImage';
 import React, { useState, useMemo, useRef } from 'react';
@@ -455,7 +456,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
         orderFormStatus === 'Follow-up Required' || orderFormStatus === 'Sample Provided'
           ? new Date(nextFollowUpDate).toISOString()
           : undefined,
-      createAutoTask: autoCreateTask
+      createAutoTask: currentUser.role==='admin'&&autoCreateTask
     });
 
     if (!res.success) { setOrderError(res.error || (language==='lo'?'ບັນທຶກບໍ່ສຳເລັດ. ກະລຸນາລອງໃໝ່.':'Could not save this order. Please retry.')); return; }
@@ -1410,7 +1411,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                         <label className="block text-[11px] font-bold text-[var(--color-text-primary)] mb-1">
                           {language === 'lo' ? 'ວັນທີສັ່ງ' : 'Order Date'}
                         </label>
-                        <input
+                        <LaoDatePicker aria-label={language === 'lo' ? 'ວັນທີສັ່ງ' : 'Order Date'}
                           type="date"
                           value={orderFormDate}
                           onChange={(e) => setOrderFormDate(e.target.value)}
@@ -1455,7 +1456,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                         <label className="block text-[11px] font-bold text-[var(--color-text-primary)] mb-1">
                           {language === 'lo' ? 'ວັນທີແຈກຕົວຢ່າງ' : 'Sample Given Date'}
                         </label>
-                        <input
+                        <LaoDatePicker aria-label={language === 'lo' ? 'ວັນທີແຈກຕົວຢ່າງ' : 'Sample Given Date'}
                           type="date"
                           value={sampleGivenDate}
                           onChange={(e) => setSampleGivenDate(e.target.value)}
@@ -1473,7 +1474,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                       <label className="block text-[11px] font-bold text-amber-800 dark:text-amber-300 mb-1">
                         {language === 'lo' ? 'ວັນທີນັດຕິດຕາມຄັ້ງຕໍ່ໄປ *' : 'Next Follow-up Date *'}
                       </label>
-                      <input
+                      <LaoDatePicker aria-label={language === 'lo' ? 'ວັນທີນັດຕິດຕາມຄັ້ງຕໍ່ໄປ *' : 'Next Follow-up Date *'}
                         type="date"
                         required
                         value={nextFollowUpDate}
@@ -1482,7 +1483,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                       />
                     </div>
 
-                    <label className="flex items-center gap-2 cursor-pointer pt-1">
+                    {currentUser.role==='admin'&&(<label className="flex items-center gap-2 cursor-pointer pt-1">
                       <input
                         type="checkbox"
                         checked={autoCreateTask}
@@ -1492,7 +1493,7 @@ export const NewProductsView: React.FC<NewProductsViewProps> = ({
                       <span className="text-xs text-[var(--color-text-primary)] font-semibold">
                         {language === 'lo' ? 'ສ້າງວຽກຕິດຕາມ (Task) ອັດຕະໂນມັດ' : 'Auto-create follow-up task in To-Do List'}
                       </span>
-                    </label>
+                    </label>)}
                   </div>
                 )}
 

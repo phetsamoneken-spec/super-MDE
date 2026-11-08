@@ -2,6 +2,7 @@
 @import "./components/coverage.css";
 @import "./components/sidebar.css";
 @import "./components/loading.css";
+@import "./components/calendar.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Serve Lao glyphs with the app so they also work without Google Fonts. */

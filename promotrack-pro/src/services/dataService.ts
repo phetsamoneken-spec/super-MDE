@@ -818,7 +818,7 @@ class DataService {
     });
 
     // Auto-create To-Do task if Follow-up Required
-    if (params.newStatus === 'Follow-up Required' && params.createAutoTask && store) {
+    if (currentUser.role==='admin' && params.newStatus === 'Follow-up Required' && params.createAutoTask && store) {
       this.ensureFollowUpTask({
         storeId: store.id,
         promotionId: record.promotionId,
@@ -1092,7 +1092,7 @@ class DataService {
 
     this.writeStored(STORAGE_KEYS.NEW_PRODUCT_STORE_ORDERS, JSON.stringify(allList));
 
-    if (params.createAutoTask && (params.newStatus === 'Follow-up Required' || params.newStatus === 'Sample Provided')) {
+    if (currentUser.role==='admin' && params.createAutoTask && (params.newStatus === 'Follow-up Required' || params.newStatus === 'Sample Provided')) {
       const store = this.getAllStoresUnfiltered().find((s) => s.id === params.storeId);
       const product = this.getAllNewProductsUnfiltered().find((p) => p.id === params.productId);
       const storeName = store ? store.storeName : 'Store';
@@ -1140,7 +1140,8 @@ class DataService {
     }
   }
 
-  public createTask(taskData: Omit<FollowUpTask, 'id' | 'createdAt' | 'updatedAt'>): { success: boolean; task?: FollowUpTask } {
+  public createTask(taskData: Omit<FollowUpTask, 'id' | 'createdAt' | 'updatedAt'>): { success: boolean; task?: FollowUpTask; error?:string } {
+    if(this.getCurrentUser().role!=='admin')return {success:false,error:'Only Admin can create tasks.'};
     const allTasks = this.getAllTasksUnfiltered();
     const newTask: FollowUpTask = {
       ...taskData,

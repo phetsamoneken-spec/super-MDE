@@ -1,3 +1,4 @@
+import { LaoDatePicker } from './LaoDatePicker';
 import React, { useState, useEffect } from 'react';
 import {
   X,
@@ -271,7 +272,7 @@ export const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
               <label className="block text-[10px] font-semibold text-[var(--color-text-secondary)] mb-1">
                 {language === 'lo' ? 'ວັນທີເລີ່ມຕົ້ນ' : 'Start Date'}
               </label>
-              <input
+              <LaoDatePicker aria-label={language === 'lo' ? 'ວັນທີເລີ່ມຕົ້ນ' : 'Start Date'}
                 type="date"
                 required
                 value={formData.startDate}
@@ -283,7 +284,7 @@ export const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
               <label className="block text-[10px] font-semibold text-[var(--color-text-secondary)] mb-1">
                 {language === 'lo' ? 'ວັນທີສິ້ນສຸດ' : 'End Date'}
               </label>
-              <input
+              <LaoDatePicker aria-label={language === 'lo' ? 'ວັນທີສິ້ນສຸດ' : 'End Date'}
                 type="date"
                 required
                 value={formData.endDate}

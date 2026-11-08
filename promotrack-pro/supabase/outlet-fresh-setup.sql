@@ -885,6 +885,16 @@ REVOKE ALL ON FUNCTION public.outlet_visit_coverage(DATE,DATE) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.can_record_outlet_visit(UUID,UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.outlet_visit_coverage(DATE,DATE) TO authenticated;
 
+
+-- 20261109000000_admin_task_creation.sql
+-- Only Admin creates tasks. Existing MDE task updates remain permitted.
+-- app_apply_changes updates existing rows before inserting missing rows, so
+-- its existing update path does not require a permissive INSERT policy.
+
+DROP POLICY tasks_insert_policy ON public.follow_up_tasks;
+CREATE POLICY tasks_insert_policy ON public.follow_up_tasks FOR INSERT
+ TO authenticated WITH CHECK (public.is_admin());
+
 -- Generated only from data/outlet.xlsx. SHA-256: da6cfd7b9fd9177cf1c4cf44fc5b5ca266d6bb6b7358c92292664655098646bc
 -- Apply schema migrations first. No auth accounts, products, orders, tasks, or promotions are fabricated.
 -- Intended for the project selected by its owner; does not delete unrelated existing records.

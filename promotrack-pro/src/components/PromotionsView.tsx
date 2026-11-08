@@ -1,3 +1,4 @@
+import { LaoDatePicker } from './LaoDatePicker';
 import { CampaignImage } from './CampaignImage';
 import React, { useState, useMemo } from 'react';
 import {
@@ -510,7 +511,7 @@ export const PromotionsView: React.FC<PromotionsViewProps> = ({
                     <label className="block text-[11px] font-bold text-[var(--color-text-primary)] mb-1">
                       {language === 'lo' ? 'ວັນທີເລີ່ມຕົ້ນ' : t.startDate}
                     </label>
-                    <input
+                    <LaoDatePicker aria-label={language === 'lo' ? 'ວັນທີເລີ່ມຕົ້ນ' : t.startDate}
                       type="date"
                       required
                       value={formData.startDate}
@@ -522,7 +523,7 @@ export const PromotionsView: React.FC<PromotionsViewProps> = ({
                     <label className="block text-[11px] font-bold text-[var(--color-text-primary)] mb-1">
                       {language === 'lo' ? 'ວັນທີສິ້ນສຸດ' : t.endDate}
                     </label>
-                    <input
+                    <LaoDatePicker aria-label={language === 'lo' ? 'ວັນທີສິ້ນສຸດ' : t.endDate}
                       type="date"
                       required
                       value={formData.endDate}

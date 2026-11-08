@@ -314,7 +314,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </motion.button>
         )}
 
-        <motion.button
+        {currentUser.role==='admin'&&(<motion.button
           whileTap={{ scale: 0.94 }}
           onClick={() => {
             triggerHaptic('medium');
@@ -325,7 +325,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         >
           <Calendar className="w-3.5 h-3.5 text-[var(--color-primary)]" />
           <span>{language === 'lo' ? 'ເພີ່ມວຽກ' : 'Add Task'}</span>
-        </motion.button>
+        </motion.button>)}
       </div>
 
       {/* 5. Today's Follow-ups Section */}

@@ -1,3 +1,4 @@
+import { LaoDatePicker } from './LaoDatePicker';
 import { TaskProductOrders } from './TaskProductOrders';
 import React, { useState, useMemo } from 'react';
 import {
@@ -134,12 +135,13 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
   }, [tasks, tabFilter, priorityFilter, salesFilter, startOfToday, endOfToday, assignmentMap]);
 
   const openNewTaskModal = () => {
+    if(currentUser.role!=='admin')return;
     triggerHaptic('medium');
     setSelectedProductId('');
     setTaskTitle('');
     setSelectedStoreId(stores[0]?.id || '');
     setSelectedPromoId(promotions[0]?.id || '');
-    setAssignedUser(currentUser.id);
+    setAssignedUser(stores[0]?.mdeId||stores[0]?.assignedSalesUser||currentUser.id);
     setDueDate(new Date(Date.now() + 86400000).toISOString().substring(0, 10));
     setPriority('High');
     setTaskStatus('Pending');
@@ -163,6 +165,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
 
   const handleSaveTask = (e: React.FormEvent) => {
     e.preventDefault();
+    if(!editingTask&&currentUser.role!=='admin')return;
     if (!taskTitle.trim()) return;
 
     triggerHaptic('medium');
@@ -252,14 +255,14 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
           </p>
         </div>
 
-        <motion.button
+        {currentUser.role==='admin'&&(<motion.button
           whileTap={{ scale: 0.92 }}
           onClick={openNewTaskModal}
           className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition active:scale-95"
         >
           <Plus className="w-4 h-4" />
           <span>{t.newTask}</span>
-        </motion.button>
+        </motion.button>)}
       </div>
 
       <section className="calm-card rounded-3xl p-4 space-y-3" aria-label={language==='lo'?'ວຽກ ແລະ ການສັ່ງຊື້':'Tasks and purchases'}>
@@ -569,7 +572,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
 
       {/* New / Edit Task Bottom Sheet Modal */}
       <AnimatePresence>
-        {(isNewTaskOpen || editingTask) && (
+        {(editingTask || (isNewTaskOpen&&currentUser.role==='admin')) && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4">
             <motion.div
               initial={{ y: '100%', opacity: 0 }}
@@ -618,13 +621,15 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
                   </label>
                   <select
                     value={selectedStoreId}
-                    onChange={(e) => {setSelectedStoreId(e.target.value);setSelectedProductId('');}}
+                    aria-label={language==='lo'?'ຮ້ານຄ້າ':'Retail Store'}
+                    onChange={(e) => {setSelectedStoreId(e.target.value);setSelectedProductId('');if(!editingTask){const store=storeMap.get(e.target.value);setAssignedUser(store?.mdeId||store?.assignedSalesUser||currentUser.id);}}}
                     className="w-full text-xs rounded-xl bg-white/80 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 p-2.5 outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     {stores.map((s) => (
                       <option key={s.id} value={s.id}>{s.storeCode} - {s.storeName}</option>
                     ))}
                   </select>
+                  {!editingTask&&currentUser.role==='admin'&&<p className="mt-1 text-[11px] text-[var(--color-text-secondary)]">MDE: {salesReps.find(rep=>rep.id===assignedUser)?.fullName||currentUser.fullName}</p>}
                 </div>
 
                 <div>
@@ -652,7 +657,7 @@ export const TodoListView: React.FC<TodoListViewProps> = ({
                     <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       {t.dueDate} *
                     </label>
-                    <input
+                    <LaoDatePicker aria-label={t.dueDate}
                       type="date"
                       required
                       value={dueDate}

@@ -52,6 +52,12 @@ await apply([{table:'new_product_store_orders',operation:'upsert',rows:[{id:orde
 {table:'follow_up_tasks',operation:'upsert',rows:[{id:taskId,product_id:launchId,store_id:ownOutlet.id,mde_id:data.mdes[0].id,task_title:'Test task',due_date:'2026-11-07',priority:'Medium',task_status:'Completed'}]}]);
 assert.equal((await db.query<{order_status:string}>('SELECT order_status FROM public.new_product_store_orders WHERE id=$1',[orderId])).rows[0].order_status,'Ordered');
 assert.equal((await db.query<{task_status:string}>('SELECT task_status FROM public.follow_up_tasks WHERE id=$1',[taskId])).rows[0].task_status,'Completed');
+const forbiddenTask={id:crypto.randomUUID(),store_id:ownOutlet.id,mde_id:data.mdes[0].id,task_title:'Must not be created by MDE',due_date:'2026-11-09',priority:'Medium',task_status:'Pending'};
+await assert.rejects(()=>apply([{table:'follow_up_tasks',operation:'upsert',rows:[forbiddenTask]}]),/row-level security/);
+await assert.rejects(()=>db.query("INSERT INTO public.follow_up_tasks(id,store_id,mde_id,task_title,due_date,priority,task_status) VALUES($1,$2,$3,'Forbidden direct insert','2026-11-09','Medium','Pending')",[forbiddenTask.id,ownOutlet.id,data.mdes[0].id]),/row-level security/);
+await assert.rejects(()=>apply([{table:'new_product_store_orders',operation:'upsert',rows:[{id:orderId,order_status:'Declined'}]},{table:'follow_up_tasks',operation:'upsert',rows:[forbiddenTask]}]),/row-level security/);
+assert.equal((await db.query<{order_status:string}>('SELECT order_status FROM public.new_product_store_orders WHERE id=$1',[orderId])).rows[0].order_status,'Ordered','forbidden task creation rolls back the entire batch');
+assert.equal((await db.query('SELECT id FROM public.follow_up_tasks WHERE id=$1',[forbiddenTask.id])).rows.length,0);
 await assert.rejects(()=>apply([{table:'sub_channels',operation:'upsert',rows:[{id:category,name:'Forbidden',channel_id:existingChannelId}]}]), /row-level security/);
 const count=data.outlets.filter(o=>o.mdeId===data.mdes[0].id).length;assert.equal((await db.query<{ n: number }>('SELECT count(*)::int AS n FROM public.outlet_directory')).rows[0].n,count);
 assert.equal((await db.query("UPDATE public.stores SET store_name='not allowed' RETURNING id")).rows.length,0);

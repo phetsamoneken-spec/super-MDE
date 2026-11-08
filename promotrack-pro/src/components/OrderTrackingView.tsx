@@ -1,3 +1,4 @@
+import { LaoDatePicker } from './LaoDatePicker';
 import { purchaseTone } from '../utils/purchaseTone';
 import React, { useState, useMemo } from 'react';
 import {
@@ -145,7 +146,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
       lastFollowUpDate: newStatus === 'Follow-up Required' ? new Date(lastFollowUpDate).toISOString() : undefined,
       nextFollowUpDate: newStatus === 'Follow-up Required' ? new Date(nextFollowUpDate).toISOString() : undefined,
       remark,
-      createAutoTask: autoCreateTask,
+      createAutoTask: currentUser.role==='admin'&&autoCreateTask,
       taskDueDate: new Date(nextFollowUpDate).toISOString(),
       taskPriority: 'High'
     });
@@ -623,7 +624,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
                       <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                         {t.orderDate}
                       </label>
-                      <input
+                      <LaoDatePicker aria-label={t.orderDate}
                         type="date"
                         value={orderDate}
                         onChange={(e) => setOrderDate(e.target.value)}
@@ -645,7 +646,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
                         <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                           {t.lastFollowUpDate}
                         </label>
-                        <input
+                        <LaoDatePicker aria-label={t.lastFollowUpDate}
                           type="date"
                           value={lastFollowUpDate}
                           onChange={(e) => setLastFollowUpDate(e.target.value)}
@@ -656,7 +657,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
                         <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                           {t.nextFollowUpDate} *
                         </label>
-                        <input
+                        <LaoDatePicker aria-label={t.nextFollowUpDate}
                           type="date"
                           required
                           value={nextFollowUpDate}
@@ -666,7 +667,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
                       </div>
                     </div>
 
-                    <label className="flex items-start gap-2 pt-1 cursor-pointer">
+                    {currentUser.role==='admin'&&(<label className="flex items-start gap-2 pt-1 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={autoCreateTask}
@@ -676,7 +677,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
                       <span className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-tight">
                         {t.autoCreateTask}
                       </span>
-                    </label>
+                    </label>)}
                   </motion.div>
                 )}
 

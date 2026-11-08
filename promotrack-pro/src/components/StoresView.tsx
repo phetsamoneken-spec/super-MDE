@@ -1,3 +1,4 @@
+import { LaoDatePicker } from './LaoDatePicker';
 import { purchaseTone } from '../utils/purchaseTone';
 import { avatarFor } from '../utils/avatar';
 import React, { useState, useMemo } from 'react';
@@ -108,6 +109,10 @@ export const StoresView: React.FC<StoresViewProps> = ({
     district: ''
   });
   const [formError, setFormError] = useState('');
+  const subChannelNames=(channelName:string)=>Array.from(new Set([
+    ...subChannels.filter(item=>channels.find(channel=>channel.id===item.channelId)?.name===channelName).map(item=>item.name),
+    ...stores.filter(store=>store.channel===channelName).map(store=>store.subChannel)
+  ].filter(Boolean))).sort((a,b)=>a.localeCompare(b,'lo'));
 
   // Maps for efficient lookup
   const salesMap = useMemo(() => new Map(salesReps.map((r) => [r.id, r])), [salesReps]);
@@ -311,7 +316,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
         orderAmount: orderStatusVal === 'Ordered' ? Number(orderAmountVal) || 0 : undefined,
         nextFollowUpDate: nextFollowUpVal ? new Date(nextFollowUpVal).toISOString() : undefined,
         remark: remarkVal,
-        createAutoTask: autoTaskVal,
+        createAutoTask: currentUser.role==='admin'&&autoTaskVal,
         taskDueDate: nextFollowUpVal ? new Date(nextFollowUpVal).toISOString() : undefined,
         taskPriority: 'High'
       });
@@ -340,7 +345,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
   };
 
   const handleQuickAddTaskForStore = () => {
-    if (!detailStore) return;
+    if (!detailStore||currentUser.role!=='admin') return;
     triggerHaptic('light');
     dataService.createTask({
       taskTitle: `Follow up: ${detailStore.storeName} (${detailStore.storeCode})`,
@@ -993,14 +998,14 @@ export const StoresView: React.FC<StoresViewProps> = ({
                         <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1">
                           {t.nextFollowUpDate}
                         </label>
-                        <input
+                        <LaoDatePicker aria-label={t.nextFollowUpDate}
                           type="date"
                           value={nextFollowUpVal}
                           onChange={(e) => setNextFollowUpVal(e.target.value)}
                           className="w-full p-2 text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)]"
                         />
                       </div>
-                      <label className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] font-medium cursor-pointer pt-1">
+                      {currentUser.role==='admin'&&(<label className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] font-medium cursor-pointer pt-1">
                         <input
                           type="checkbox"
                           checked={autoTaskVal}
@@ -1008,7 +1013,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                           className="rounded text-[var(--color-primary)] focus:ring-0"
                         />
                         <span>{t.autoCreateTask}</span>
-                      </label>
+                      </label>)}
                     </motion.div>
                   )}
 
@@ -1036,7 +1041,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                       <span>{orderStatusVal==='Ordered'?(language==='lo'?'ຢືນຢັນການສັ່ງຊື້':'Confirm purchase'):(language === 'lo' ? 'ບັນທຶກສະຖານະການສັ່ງຊື້' : 'Save Order Status')}</span>
                     </motion.button>
 
-                    <motion.button
+                    {currentUser.role==='admin'&&(<motion.button
                       whileTap={{ scale: 0.94 }}
                       type="button"
                       onClick={handleQuickAddTaskForStore}
@@ -1045,7 +1050,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                     >
                       <CheckSquare className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                       <span className="hidden xs:inline">+ Task</span>
-                    </motion.button>
+                    </motion.button>)}
                   </div>
                 </form>
               </div>
@@ -1138,7 +1143,8 @@ export const StoresView: React.FC<StoresViewProps> = ({
                     </label>
                     <select
                       value={formData.channel}
-                      onChange={(e) => setFormData({ ...formData, channel: e.target.value })}
+                      aria-label={t.channel}
+                      onChange={(e) => {const channel=e.target.value;setFormData({ ...formData, channel,subChannel:subChannelNames(channel)[0]||'' });}}
                       className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
                     >
                       {channels.map((channel) => <option key={channel.id} value={channel.name}>{channel.name}</option>)}
@@ -1165,19 +1171,15 @@ export const StoresView: React.FC<StoresViewProps> = ({
                     <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1">
                       {t.subChannel}
                     </label>
-                    <input
-                      type="text"
+                    <select
+                      aria-label={t.subChannel}
                       value={formData.subChannel}
                       onChange={(e) => setFormData({ ...formData, subChannel: e.target.value })}
-                      placeholder="Sub-channel"
-                      list="store-sub-channel-options"
                       className="w-full text-xs rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
-                    />
-                    <datalist id="store-sub-channel-options">
-                      {subChannels.filter((item) => channels.find((channel) => channel.id === item.channelId)?.name === formData.channel).map((item) => (
-                        <option key={item.id} value={item.name} />
-                      ))}
-                    </datalist>
+                    >
+                      <option value="">{language==='lo'?'ເລືອກ Sub-channel':'Select Sub-channel'}</option>
+                      {subChannelNames(formData.channel).map(name=><option key={name} value={name}>{name}</option>)}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1">

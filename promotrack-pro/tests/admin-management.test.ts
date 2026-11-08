@@ -88,6 +88,19 @@ test('sales cannot add or delete Sub-channels or new products through the servic
   assert.deepEqual([...storage.data], snapshot);
 });
 
+test('Admin creates tasks; MDE cannot create tasks or automatic follow-ups but can complete assigned work',()=>{
+  const admin=dataService.getCurrentUser(),rep=dataService.getSalesReps()[0],store=dataService.getAllStoresUnfiltered().find(item=>item.assignedSalesUser===rep.id||item.mdeId===rep.id)!;
+  const task={storeId:store.id,assignedUser:rep.id,taskTitle:'Assigned by Admin',dueDate:'2026-11-09',priority:'High' as const,taskStatus:'Pending' as const};
+  const created=dataService.createTask(task);assert.equal(created.success,true);
+  dataService.setCurrentUser(rep);const before=JSON.stringify(dataService.getAllTasksUnfiltered());
+  assert.equal(dataService.createTask({...task,taskTitle:'Blocked'}).success,false);
+  dataService.ensureFollowUpTask({...task,storeId:'different-store',taskTitle:'Blocked automatic follow-up'});
+  assert.equal(JSON.stringify(dataService.getAllTasksUnfiltered()),before);
+  assert.equal(dataService.updateTask(created.task!.id,{taskStatus:'Completed'}).success,true);
+  assert.equal(dataService.getTasks().find(item=>item.id===created.task!.id)?.taskStatus,'Completed');
+  dataService.setCurrentUser(admin);
+});
+
 test('NPD follow-up keeps the exact product and outlet across persisted task reads', () => {
   const a=addProduct().product!, b=addProduct().product!;
   const store=dataService.getStores()[0];
