@@ -1,0 +1,47 @@
+{
+  "id": "./",
+  "name": "Super MDE",
+  "short_name": "Super MDE",
+  "description": "Sales Promotion Tracking & Store Order Management with To-Do List, bilingual Lao-English support, and offline drafts.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#146c4b",
+  "theme_color": "#146c4b",
+  "categories": [
+    "business",
+    "productivity",
+    "sales"
+  ],
+  "icons": [
+    {
+      "src": "icons/super-mde-192-v1.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/super-mde-512-v1.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/super-mde-maskable-192-v2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/super-mde-maskable-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ]
+}
