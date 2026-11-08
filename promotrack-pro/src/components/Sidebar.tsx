@@ -151,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Navigation Links */}
           <div className="space-y-1">
-            {navItems.filter(item=>currentUser.role==='admin'||!['users','more','dbReview'].includes(item.id)).map((item) => {
+            {navItems.filter(item=>currentUser.role==='admin'||!['users','more','dbReview','excel'].includes(item.id)).map((item) => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
               return (

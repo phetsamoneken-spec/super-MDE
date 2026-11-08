@@ -360,7 +360,7 @@ export default function App() {
           )}
 
           {/* Tab 6: Excel Import & Export Center */}
-          {currentTab === 'excel' && (
+          {currentTab === 'excel' && currentUser.role === 'admin' && (
             <ExcelModuleView
               stores={stores}
               currentUser={currentUser}
