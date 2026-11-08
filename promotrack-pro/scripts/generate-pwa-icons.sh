@@ -5,6 +5,9 @@ source_image=data/branding/super-mde-logo.png
 for size in 32 180 192 512; do
   magick "$source_image" -resize "${size}x${size}" -strip -define png:compression-level=9 "public/icons/super-mde-${size}-v1.png"
 done
-# The entire square artwork fits within the central 80%-diameter safe circle:
-# sqrt(2) * 288/2 < 512 * .4. Android launchers can mask it without losing text.
-magick "$source_image" -resize 288x288 -background white -gravity center -extent 512x512 -strip -define png:compression-level=9 public/icons/super-mde-maskable-512-v1.png
+# Maskable Android art has a full-bleed background and a protected central mark.
+# Do not put the normal rounded logo on a white padded canvas.
+maskable_image=data/branding/super-mde-maskable-v2.png
+for size in 192 512; do
+  magick "$maskable_image" -resize "${size}x${size}" -alpha off -strip -define png:compression-level=9 "public/icons/super-mde-maskable-${size}-v2.png"
+done
